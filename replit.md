@@ -1,6 +1,6 @@
-# [Project name]
+# Campus Connect
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Campus Connect helps college students organize assignments, exams, projects, and academic deadlines in one calm workspace.
 
 ## Run & Operate
 
@@ -22,23 +22,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/campus-connect` — responsive React/Vite web app with Clerk sign-in, dashboard, task, calendar, profile, and settings views.
+- `artifacts/api-server` — Express API, Clerk middleware, task/course/dashboard routes.
+- `lib/api-spec/openapi.yaml` — source of truth for the API contract.
+- `lib/db/src/schema` — Drizzle tables for courses and tasks.
+- `artifacts/campus-connect/src/index.css` — Campus Connect theme tokens and Clerk styling.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Clerk owns account creation, email/password sign-in, session cookies, and sign-out; the API scopes records by the Clerk user id.
+- Task and course endpoints are defined in OpenAPI and generate both the React Query client and Zod validators.
+- A new student's first authenticated task/course request seeds a small starter plan so the dashboard is useful immediately.
+- Calendar-only dates remain `YYYY-MM-DD` strings in PostgreSQL to avoid timezone shifts.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Public landing page with branded sign-in and sign-up.
+- Dashboard with today's focus list, upcoming deadlines, and weekly completion rhythm.
+- Task CRUD with completion toggles, course/type/status filters, search, priorities, due date/time, and notes.
+- Weekly calendar, course management, student profile, and reminder preference settings.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The brief calls for a clean, modern, simple, mobile-first experience that works across phones, tablets, and computers.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Clerk browser auth uses same-origin session cookies; do not add bearer-token handling to the web client.
+- Restart the managed API and Campus Connect workflows after changing server dependencies or build configuration.
 
 ## Pointers
 

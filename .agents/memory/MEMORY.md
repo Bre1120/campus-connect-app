@@ -1,0 +1,1 @@
+- [OpenAPI Zod codegen](zod-codegen-version.md) — keep the workspace Zod version aligned with the generator's Zod 4 output.

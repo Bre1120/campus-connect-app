@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Campus Connect"
+description = "A mobile-first academic organization app for college students to manage assignments, exams, projects, deadlines, reminders, and weekly progress from one calm, focused workspace."
+version = "1.0.0"
+id = "artifacts/campus-connect"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19048
+
+[services.development]
+run = "pnpm --filter @workspace/campus-connect run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/campus-connect", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/campus-connect/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19048"
+BASE_PATH = "/"

@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Campus Connect academic organization API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Student dashboard summaries
+  - name: tasks
+    description: Academic tasks
+  - name: courses
+    description: Student courses
 paths:
   /healthz:
     get:
@@ -24,7 +30,227 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard overview
+      description: Returns the current student's daily tasks, upcoming deadlines, and completion progress.
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List academic tasks
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, active, completed]
+            default: all
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [assignment, exam, project, reading, other]
+        - name: courseId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create an academic task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "204":
+          description: Task deleted
+        "404":
+          description: Task not found
+  /tasks/{id}/complete:
+    patch:
+      operationId: toggleTaskCompletion
+      tags: [tasks]
+      summary: Toggle task completion
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCompletionInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List student courses
+      responses:
+        "200":
+          description: Courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create a course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+  /courses/{id}:
+    patch:
+      operationId: updateCourse
+      tags: [courses]
+      summary: Update a course
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: Updated course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      summary: Delete a course
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "204":
+          description: Course deleted
+        "404":
+          description: Course not found
 components:
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    CourseId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +259,166 @@ components:
           type: string
       required:
         - status
+    Course:
+      type: object
+      required: [id, name, code, color]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        color:
+          type: string
+    CourseInput:
+      type: object
+      required: [name, code, color]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 1
+        color:
+          type: string
+          minLength: 1
+    CourseUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 1
+        color:
+          type: string
+          minLength: 1
+    Task:
+      type: object
+      required: [id, title, courseId, courseName, courseCode, type, dueDate, priority, completed, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        courseId:
+          type: integer
+        courseName:
+          type: string
+        courseCode:
+          type: string
+        type:
+          type: string
+          enum: [assignment, exam, project, reading, other]
+        dueDate:
+          type: string
+          format: date
+        dueTime:
+          type: [string, "null"]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        completed:
+          type: boolean
+        notes:
+          type: [string, "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TaskInput:
+      type: object
+      required: [title, courseId, type, dueDate, priority]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        courseId:
+          type: integer
+        type:
+          type: string
+          enum: [assignment, exam, project, reading, other]
+        dueDate:
+          type: string
+          format: date
+        dueTime:
+          type: [string, "null"]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        notes:
+          type: [string, "null"]
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        courseId:
+          type: integer
+        type:
+          type: string
+          enum: [assignment, exam, project, reading, other]
+        dueDate:
+          type: string
+          format: date
+        dueTime:
+          type: [string, "null"]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        notes:
+          type: [string, "null"]
+        completed:
+          type: boolean
+    TaskCompletionInput:
+      type: object
+      required: [completed]
+      properties:
+        completed:
+          type: boolean
+    Dashboard:
+      type: object
+      required: [todayTasks, upcomingTasks, completion]
+      properties:
+        todayTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        upcomingTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        completion:
+          $ref: "#/components/schemas/CompletionSummary"
+    CompletionSummary:
+      type: object
+      required: [completed, total, percentage, days]
+      properties:
+        completed:
+          type: integer
+        total:
+          type: integer
+        percentage:
+          type: integer
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompletionDay"
+    CompletionDay:
+      type: object
+      required: [date, completed, total]
+      properties:
+        date:
+          type: string
+          format: date
+        completed:
+          type: integer
+        total:
+          type: integer
 
