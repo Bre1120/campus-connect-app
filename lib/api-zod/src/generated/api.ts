@@ -299,3 +299,55 @@ export const DeleteCourseParams = zod.object({
 export const DeleteCourseResponse = zod.void()
 
 
+/**
+ * @summary Get student profile
+ */
+export const GetProfileResponse = zod.object({
+  "displayName": zod.string(),
+  "major": zod.string(),
+  "year": zod.string()
+})
+
+
+/**
+ * @summary Update student profile
+ */
+export const UpdateProfileBody = zod.object({
+  "displayName": zod.string(),
+  "major": zod.string(),
+  "year": zod.string()
+})
+
+export const UpdateProfileResponse = zod.object({
+  "displayName": zod.string(),
+  "major": zod.string(),
+  "year": zod.string()
+})
+
+
+/**
+ * @summary Get reminder preferences
+ */
+export const GetPreferencesResponse = zod.object({
+  "dailyFocus": zod.boolean(),
+  "deadlineReminders": zod.boolean(),
+  "weeklyReflection": zod.boolean()
+})
+
+
+/**
+ * @summary Update reminder preferences
+ */
+export const UpdatePreferencesBody = zod.object({
+  "dailyFocus": zod.boolean(),
+  "deadlineReminders": zod.boolean(),
+  "weeklyReflection": zod.boolean()
+})
+
+export const UpdatePreferencesResponse = zod.object({
+  "dailyFocus": zod.boolean(),
+  "deadlineReminders": zod.boolean(),
+  "weeklyReflection": zod.boolean()
+})
+
+

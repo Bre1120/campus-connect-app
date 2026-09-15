@@ -16,6 +16,8 @@ tags:
     description: Academic tasks
   - name: courses
     description: Student courses
+  - name: profile
+    description: Student profile and preferences
 paths:
   /healthz:
     get:
@@ -237,6 +239,64 @@ paths:
           description: Course deleted
         "404":
           description: Course not found
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get student profile
+      responses:
+        "200":
+          description: Student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update student profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /preferences:
+    get:
+      operationId: getPreferences
+      tags: [profile]
+      summary: Get reminder preferences
+      responses:
+        "200":
+          description: Reminder preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+    patch:
+      operationId: updatePreferences
+      tags: [profile]
+      summary: Update reminder preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesUpdate"
+      responses:
+        "200":
+          description: Updated reminder preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
 components:
   parameters:
     TaskId:
@@ -421,4 +481,44 @@ components:
           type: integer
         total:
           type: integer
+    Profile:
+      type: object
+      required: [displayName, major, year]
+      properties:
+        displayName:
+          type: string
+        major:
+          type: string
+        year:
+          type: string
+    ProfileUpdate:
+      type: object
+      required: [displayName, major, year]
+      properties:
+        displayName:
+          type: string
+        major:
+          type: string
+        year:
+          type: string
+    Preferences:
+      type: object
+      required: [dailyFocus, deadlineReminders, weeklyReflection]
+      properties:
+        dailyFocus:
+          type: boolean
+        deadlineReminders:
+          type: boolean
+        weeklyReflection:
+          type: boolean
+    PreferencesUpdate:
+      type: object
+      required: [dailyFocus, deadlineReminders, weeklyReflection]
+      properties:
+        dailyFocus:
+          type: boolean
+        deadlineReminders:
+          type: boolean
+        weeklyReflection:
+          type: boolean
 

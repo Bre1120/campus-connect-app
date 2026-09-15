@@ -162,6 +162,30 @@ export interface Dashboard {
   completion: CompletionSummary;
 }
 
+export interface Profile {
+  displayName: string;
+  major: string;
+  year: string;
+}
+
+export interface ProfileUpdate {
+  displayName: string;
+  major: string;
+  year: string;
+}
+
+export interface Preferences {
+  dailyFocus: boolean;
+  deadlineReminders: boolean;
+  weeklyReflection: boolean;
+}
+
+export interface PreferencesUpdate {
+  dailyFocus: boolean;
+  deadlineReminders: boolean;
+  weeklyReflection: boolean;
+}
+
 export type ListTasksParams = {
 status?: ListTasksStatus;
 type?: ListTasksType;

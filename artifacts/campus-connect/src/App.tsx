@@ -15,8 +15,11 @@ import {
 } from 'lucide-react';
 import {
   getGetDashboardQueryKey, getGetTaskQueryKey, getListCoursesQueryKey, getListTasksQueryKey,
+  getGetPreferencesQueryKey, getGetProfileQueryKey,
   useCreateCourse, useCreateTask, useDeleteCourse, useDeleteTask, useGetDashboard, useGetTask,
+  useGetPreferences, useGetProfile,
   useListCourses, useListTasks, useToggleTaskCompletion, useUpdateCourse, useUpdateTask,
+  useUpdatePreferences, useUpdateProfile,
   type Course, type Task, type TaskInput, type TaskType,
 } from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -44,6 +47,12 @@ const taskSchema = z.object({
 type TaskFormValues = z.infer<typeof taskSchema>;
 const courseSchema = z.object({ name: z.string().min(1, 'Course name is required'), code: z.string().min(1, 'Course code is required'), color: z.string().min(1) });
 type CourseFormValues = z.infer<typeof courseSchema>;
+const profileSchema = z.object({
+  displayName: z.string().min(1, 'Add your name'),
+  major: z.string().min(1, 'Add your major or program'),
+  year: z.string().min(1, 'Choose your year'),
+});
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 const typeLabels: Record<string, string> = { assignment: 'Assignment', exam: 'Exam', project: 'Project', reading: 'Reading', other: 'Other' };
 const typeColors: Record<string, string> = {
@@ -246,13 +255,42 @@ function CourseManager({ courses }: { courses: Course[] }) {
 function ProfilePage() {
   const { user } = useUser();
   const courses = useListCourses();
-  return <div className="cc-page space-y-7"><section><p className="text-sm font-semibold text-primary">Your campus, your pace</p><h1 className="cc-display mt-1 text-4xl font-semibold">Profile</h1><p className="mt-2 text-sm text-muted-foreground">A few details to make Campus Connect feel like yours.</p></section><div className="grid gap-5 lg:grid-cols-[.8fr_1.2fr]"><div className="rounded-2xl bg-sidebar p-7 text-sidebar-foreground shadow-lg"><div className="grid size-20 place-items-center rounded-3xl bg-primary text-3xl font-bold text-primary-foreground">{user?.firstName?.slice(0, 1) ?? 'S'}</div><h2 className="cc-display mt-6 text-3xl font-semibold">{user?.fullName ?? 'Your profile'}</h2><p className="mt-1 text-sm text-sidebar-foreground/60">{user?.primaryEmailAddress?.emailAddress ?? 'Add an email in your account'}</p><div className="mt-8 border-t border-sidebar-border pt-5"><div className="flex items-center justify-between text-sm"><span className="text-sidebar-foreground/55">Member since</span><span className="font-semibold">{user?.createdAt ? format(new Date(user.createdAt), 'MMM yyyy') : 'This year'}</span></div></div></div><div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-7"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Your courses</p><h2 className="cc-display mt-1 text-2xl font-semibold">This semester</h2></div><BookOpen className="text-primary" size={22} /></div>{courses.isLoading ? <TaskSkeleton rows={3} /> : courses.data?.length ? <CourseManager courses={courses.data} /> : <EmptyState title="Add your first course" description="Courses help your tasks become a plan, not just a list." action={<CourseManager courses={[]} />} />}</div></div></div>;
+  const profile = useGetProfile();
+  const update = useUpdateProfile();
+  const { toast } = useToast();
+  const client = useQueryClient();
+  const form = useForm<ProfileFormValues>({ resolver: zodResolver(profileSchema), defaultValues: { displayName: '', major: '', year: '' } });
+  useEffect(() => {
+    if (profile.data) form.reset(profile.data);
+  }, [profile.data, form]);
+  const submit = (values: ProfileFormValues) => update.mutate({ data: values }, {
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+      toast({ title: 'Profile saved', description: 'Your student details are stored and ready for alpha review.' });
+    },
+  });
+  return <div className="cc-page space-y-7"><section><p className="text-sm font-semibold text-primary">Your campus, your pace</p><h1 className="cc-display mt-1 text-4xl font-semibold">Profile</h1><p className="mt-2 text-sm text-muted-foreground">Save a few details so Campus Connect feels like yours.</p></section><div className="grid gap-5 lg:grid-cols-[.8fr_1.2fr]"><div className="rounded-2xl bg-sidebar p-7 text-sidebar-foreground shadow-lg"><div className="grid size-20 place-items-center rounded-3xl bg-primary text-3xl font-bold text-primary-foreground">{user?.firstName?.slice(0, 1) ?? 'S'}</div><h2 className="cc-display mt-6 text-3xl font-semibold">{profile.data?.displayName || user?.fullName || 'Your profile'}</h2><p className="mt-1 text-sm text-sidebar-foreground/60">{user?.primaryEmailAddress?.emailAddress ?? 'Your account email'}</p><div className="mt-8 border-t border-sidebar-border pt-5"><div className="flex items-center justify-between text-sm"><span className="text-sidebar-foreground/55">Member since</span><span className="font-semibold">{user?.createdAt ? format(new Date(user.createdAt), 'MMM yyyy') : 'This year'}</span></div></div></div><div className="space-y-5"><div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-7"><div className="mb-5"><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Student details</p><h2 className="cc-display mt-1 text-2xl font-semibold">Make it yours</h2><p className="mt-2 text-sm text-muted-foreground">This information is saved to your profile and shown again when you return.</p></div><Form {...form}><form onSubmit={form.handleSubmit(submit)} className="space-y-4"><FormField control={form.control} name="displayName" render={({ field }) => <FormItem><FormLabel>Name</FormLabel><FormControl><input className="field" placeholder="Jordan Lee" {...field} data-testid="input-profile-name" /></FormControl><FormMessage /></FormItem>} /><div className="grid gap-4 sm:grid-cols-2"><FormField control={form.control} name="major" render={({ field }) => <FormItem><FormLabel>Major or program</FormLabel><FormControl><input className="field" placeholder="Interaction Design" {...field} data-testid="input-profile-major" /></FormControl><FormMessage /></FormItem>} /><FormField control={form.control} name="year" render={({ field }) => <FormItem><FormLabel>Year</FormLabel><FormControl><select className="field" {...field} data-testid="select-profile-year"><option value="">Choose year</option><option>First year</option><option>Second year</option><option>Third year</option><option>Fourth year</option><option>Graduate</option></select></FormControl><FormMessage /></FormItem>} /></div><div className="flex justify-end pt-2"><AppButton type="submit" disabled={update.isPending} data-testid="button-save-profile">{update.isPending ? 'Saving...' : 'Save profile'}</AppButton></div></form></Form></div><div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-7"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Your courses</p><h2 className="cc-display mt-1 text-2xl font-semibold">This semester</h2></div><BookOpen className="text-primary" size={22} /></div>{courses.isLoading ? <TaskSkeleton rows={3} /> : courses.data?.length ? <CourseManager courses={courses.data} /> : <EmptyState title="Add your first course" description="Courses help your tasks become a plan, not just a list." action={<CourseManager courses={[]} />} />}</div></div></div></div>;
 }
 
 function SettingsPage() {
-  const [saved, setSaved] = useState(false); const [settings, setSettings] = useState({ daily: true, deadlines: true, weekly: false });
+  const preferences = useGetPreferences();
+  const update = useUpdatePreferences();
+  const client = useQueryClient();
+  const { toast } = useToast();
+  const [saved, setSaved] = useState(false);
+  const [settings, setSettings] = useState({ dailyFocus: true, deadlineReminders: true, weeklyReflection: false });
+  useEffect(() => {
+    if (preferences.data) setSettings(preferences.data);
+  }, [preferences.data]);
   const change = (key: keyof typeof settings) => { setSettings(s => ({ ...s, [key]: !s[key] })); setSaved(false); };
-  return <div className="cc-page max-w-3xl space-y-7"><section><p className="text-sm font-semibold text-primary">Make it work for you</p><h1 className="cc-display mt-1 text-4xl font-semibold">Settings</h1><p className="mt-2 text-sm text-muted-foreground">Choose when Campus Connect checks in.</p></section><div className="rounded-2xl border border-border bg-card shadow-sm"><div className="border-b border-border p-6 sm:p-7"><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Reminders</p><h2 className="cc-display mt-1 text-2xl font-semibold">Thoughtful, not noisy</h2></div><div className="divide-y divide-border">{([{ key: 'daily', title: 'Daily focus note', desc: 'A short morning view of what deserves your attention.' }, { key: 'deadlines', title: 'Deadline reminders', desc: 'A gentle heads-up the day before something is due.' }, { key: 'weekly', title: 'Weekly reflection', desc: 'A Sunday look back at the progress you made.' }] as const).map(item => <button type="button" key={item.key} className="flex w-full items-center gap-4 p-6 text-left hover:bg-muted/40 sm:p-7" onClick={() => change(item.key)} data-testid={`button-setting-${item.key}`}><span className={`grid size-10 shrink-0 place-items-center rounded-xl ${settings[item.key] ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>{settings[item.key] ? <Check size={18} /> : <Bell size={18} />}</span><span className="flex-1"><span className="block text-sm font-bold">{item.title}</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">{item.desc}</span></span><span className={`relative h-6 w-11 rounded-full ${settings[item.key] ? 'bg-primary' : 'bg-border'}`}><span className={`absolute top-1 size-4 rounded-full bg-card shadow-sm ${settings[item.key] ? 'left-6' : 'left-1'}`} /></span></button>)}</div><div className="flex items-center justify-between bg-secondary/25 p-5 sm:p-6"><span className="text-sm text-muted-foreground">{saved ? 'Your preferences are saved.' : 'Changes are saved when you tap save.'}</span><AppButton onClick={() => setSaved(true)} data-testid="button-save-settings">Save preferences</AppButton></div></div></div>;
+  const save = () => update.mutate({ data: settings }, {
+    onSuccess: () => {
+      setSaved(true);
+      client.invalidateQueries({ queryKey: getGetPreferencesQueryKey() });
+      toast({ title: 'Preferences saved', description: 'Your reminder choices are stored for next time.' });
+    },
+  });
+  return <div className="cc-page max-w-3xl space-y-7"><section><p className="text-sm font-semibold text-primary">Make it work for you</p><h1 className="cc-display mt-1 text-4xl font-semibold">Settings</h1><p className="mt-2 text-sm text-muted-foreground">Choose when Campus Connect checks in. These preferences persist with your account.</p></section><div className="rounded-2xl border border-border bg-card shadow-sm"><div className="border-b border-border p-6 sm:p-7"><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Reminders</p><h2 className="cc-display mt-1 text-2xl font-semibold">Thoughtful, not noisy</h2></div><div className="divide-y divide-border">{([{ key: 'dailyFocus', title: 'Daily focus note', desc: 'A short morning view of what deserves your attention.' }, { key: 'deadlineReminders', title: 'Deadline reminders', desc: 'A gentle heads-up the day before something is due.' }, { key: 'weeklyReflection', title: 'Weekly reflection', desc: 'A Sunday look back at the progress you made.' }] as const).map(item => <button type="button" key={item.key} className="flex w-full items-center gap-4 p-6 text-left hover:bg-muted/40 sm:p-7" onClick={() => change(item.key)} data-testid={`button-setting-${item.key}`}><span className={`grid size-10 shrink-0 place-items-center rounded-xl ${settings[item.key] ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>{settings[item.key] ? <Check size={18} /> : <Bell size={18} />}</span><span className="flex-1"><span className="block text-sm font-bold">{item.title}</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">{item.desc}</span></span><span className={`relative h-6 w-11 rounded-full ${settings[item.key] ? 'bg-primary' : 'bg-border'}`}><span className={`absolute top-1 size-4 rounded-full bg-card shadow-sm ${settings[item.key] ? 'left-6' : 'left-1'}`} /></span></button>)}</div><div className="flex items-center justify-between bg-secondary/25 p-5 sm:p-6"><span className="text-sm text-muted-foreground">{saved ? 'Your preferences are saved.' : 'Changes are saved when you tap save.'}</span><AppButton onClick={save} disabled={update.isPending || preferences.isLoading} data-testid="button-save-settings">{update.isPending ? 'Saving...' : 'Save preferences'}</AppButton></div></div></div>;
 }
 
 function LandingPage() {

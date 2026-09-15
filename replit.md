@@ -23,9 +23,9 @@ Campus Connect helps college students organize assignments, exams, projects, and
 ## Where things live
 
 - `artifacts/campus-connect` — responsive React/Vite web app with Clerk sign-in, dashboard, task, calendar, profile, and settings views.
-- `artifacts/api-server` — Express API, Clerk middleware, task/course/dashboard routes.
+- `artifacts/api-server` — Express API, Clerk middleware, task/course/dashboard/profile/preferences routes.
 - `lib/api-spec/openapi.yaml` — source of truth for the API contract.
-- `lib/db/src/schema` — Drizzle tables for courses and tasks.
+- `lib/db/src/schema` — Drizzle tables for courses, tasks, student profiles, and reminder preferences.
 - `artifacts/campus-connect/src/index.css` — Campus Connect theme tokens and Clerk styling.
 
 ## Architecture decisions

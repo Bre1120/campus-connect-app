@@ -1,0 +1,44 @@
+Activity #9: Prep App for Alpha Testing
+Overview:
+We will be practicing Alpha Testing (peer review/feedback) in class 9/18. This submission is meant to be your latest version of you app for review that day. 
+
+Please be sure to click "Redpublish" before submitting this assignment. 
+
+ Screenshot 2026-09-11 at 1.13.20 PM.png
+
+ 
+
+Review the following to ensure your app meets the criteria that we are working toward:
+
+1. Create Data to a Database
+Show that the user can input and submit information, which is then stored correctly in your database (e.g., user creates a profile and user data is stored in the database).
+
+A (Excellent): Fully functional and user-friendly input that stores data accurately and is immediately visible in the database.
+B (Proficient): Data is created and stored with minor usability issues or unclear visual feedback.
+C (Needs Improvement): Data is stored but the input experience is confusing or buggy.
+D/F (Incomplete): Data does not store or functionality is broken.
+
+2. Render Data from a Database
+Demonstrate that once a user creates or submits data, the app provides feedback or displays it back in some form.
+
+A: Data is clearly displayed or confirmed visually (e.g., list, card, success message).
+B: Data is confirmed in some way but could be clearer or better presented.
+C: Feedback is vague or difficult to locate; data feels lost.
+D/F: No user-facing confirmation; data disappears with no trace.
+
+3. User Flow & Experience
+Evaluate how intuitive and seamless it is for a user to interact with the app from start to finish.
+
+A: App has a clear, logical flow with intuitive navigation and well-labeled elements. Minimal friction in completing tasks.
+B: Mostly smooth experience with minor navigation issues or unclear labeling.
+C: Functional, but confusing or inefficient navigation.
+D/F: App is difficult to use or understand; unclear how to interact or complete tasks.
+
+4. Visual Design & Layout
+Assess how effectively the app uses layout, alignment, spacing, and visual hierarchy to create a professional, clean interface. AND quality of narrated demo video (voiceover + you must appear in the video via talking head, etc).
+
+A: Design is visually appealing, consistent, and enhances usability. Great use of spacing, alignment, and layout.
+B: Clean and functional design with small inconsistencies or slightly cluttered areas.
+C: Design choices sometimes hinder usability or clarity.
+D/F: Layout is disorganized, unaligned, or visually distracting.
+
