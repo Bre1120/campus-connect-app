@@ -351,3 +351,141 @@ export const UpdatePreferencesResponse = zod.object({
 })
 
 
+/**
+ * @summary List the student's flashcard decks
+ */
+export const ListFlashcardDecksResponseItem = zod.object({
+  "id": zod.int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "courseId": zod.int().nullish(),
+  "courseName": zod.string().nullish(),
+  "cardCount": zod.int(),
+  "createdAt": zod.coerce.date()
+})
+export const ListFlashcardDecksResponse = zod.array(ListFlashcardDecksResponseItem)
+
+
+/**
+ * @summary Create a flashcard deck
+ */
+
+
+
+
+
+
+export const CreateFlashcardDeckBody = zod.object({
+  "title": zod.string().min(1),
+  "description": zod.string().optional(),
+  "courseId": zod.int().nullish(),
+  "cards": zod.array(zod.object({
+  "front": zod.string().min(1),
+  "back": zod.string().min(1)
+})).min(1)
+})
+
+export const CreateFlashcardDeckResponse = zod.object({
+  "id": zod.int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "courseId": zod.int().nullish(),
+  "courseName": zod.string().nullish(),
+  "cardCount": zod.int(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "cards": zod.array(zod.object({
+  "id": zod.int(),
+  "deckId": zod.int(),
+  "front": zod.string(),
+  "back": zod.string(),
+  "confidence": zod.enum(['new', 'learning', 'mastered']),
+  "createdAt": zod.coerce.date()
+}))
+}))
+
+
+/**
+ * @summary Get a flashcard deck and its cards
+ */
+export const GetFlashcardDeckParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const GetFlashcardDeckResponse = zod.object({
+  "id": zod.int(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "courseId": zod.int().nullish(),
+  "courseName": zod.string().nullish(),
+  "cardCount": zod.int(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "cards": zod.array(zod.object({
+  "id": zod.int(),
+  "deckId": zod.int(),
+  "front": zod.string(),
+  "back": zod.string(),
+  "confidence": zod.enum(['new', 'learning', 'mastered']),
+  "createdAt": zod.coerce.date()
+}))
+}))
+
+
+/**
+ * @summary Delete a flashcard deck
+ */
+export const DeleteFlashcardDeckParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteFlashcardDeckResponse = zod.void()
+
+
+/**
+ * @summary Update a flashcard's review confidence
+ */
+export const UpdateFlashcardConfidenceParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const UpdateFlashcardConfidenceBody = zod.object({
+  "confidence": zod.enum(['new', 'learning', 'mastered'])
+})
+
+export const UpdateFlashcardConfidenceResponse = zod.object({
+  "id": zod.int(),
+  "deckId": zod.int(),
+  "front": zod.string(),
+  "back": zod.string(),
+  "confidence": zod.enum(['new', 'learning', 'mastered']),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Ask the personalized AI study assistant
+ */
+export const askStudyAssistantBodyPromptMin = 3;
+
+
+
+export const AskStudyAssistantBody = zod.object({
+  "prompt": zod.string().min(askStudyAssistantBodyPromptMin),
+  "courseId": zod.int().nullish()
+})
+
+
+
+
+
+export const AskStudyAssistantResponse = zod.object({
+  "answer": zod.string(),
+  "suggestedTitle": zod.string(),
+  "suggestedCards": zod.array(zod.object({
+  "front": zod.string().min(1),
+  "back": zod.string().min(1)
+}))
+})
+
+

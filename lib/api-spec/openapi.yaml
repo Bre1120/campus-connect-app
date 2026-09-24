@@ -18,6 +18,8 @@ tags:
     description: Student courses
   - name: profile
     description: Student profile and preferences
+  - name: study-tools
+    description: Flashcards, reviews, and AI study support
 paths:
   /healthz:
     get:
@@ -297,6 +299,104 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Preferences"
+  /flashcard-decks:
+    get:
+      operationId: listFlashcardDecks
+      tags: [study-tools]
+      summary: List the student's flashcard decks
+      responses:
+        "200":
+          description: Flashcard decks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FlashcardDeck"
+    post:
+      operationId: createFlashcardDeck
+      tags: [study-tools]
+      summary: Create a flashcard deck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FlashcardDeckInput"
+      responses:
+        "201":
+          description: Created flashcard deck
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlashcardDeckDetail"
+  /flashcard-decks/{id}:
+    get:
+      operationId: getFlashcardDeck
+      tags: [study-tools]
+      summary: Get a flashcard deck and its cards
+      parameters:
+        - $ref: "#/components/parameters/DeckId"
+      responses:
+        "200":
+          description: Flashcard deck
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlashcardDeckDetail"
+        "404":
+          description: Flashcard deck not found
+    delete:
+      operationId: deleteFlashcardDeck
+      tags: [study-tools]
+      summary: Delete a flashcard deck
+      parameters:
+        - $ref: "#/components/parameters/DeckId"
+      responses:
+        "204":
+          description: Flashcard deck deleted
+        "404":
+          description: Flashcard deck not found
+  /flashcards/{id}/confidence:
+    patch:
+      operationId: updateFlashcardConfidence
+      tags: [study-tools]
+      summary: Update a flashcard's review confidence
+      parameters:
+        - $ref: "#/components/parameters/FlashcardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FlashcardConfidenceUpdate"
+      responses:
+        "200":
+          description: Updated flashcard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Flashcard"
+        "404":
+          description: Flashcard not found
+  /ai/study-assistant:
+    post:
+      operationId: askStudyAssistant
+      tags: [study-tools]
+      summary: Ask the personalized AI study assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudyAssistantInput"
+      responses:
+        "200":
+          description: Personalized study guidance and suggested flashcards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyAssistantResponse"
 components:
   parameters:
     TaskId:
@@ -306,6 +406,18 @@ components:
       schema:
         type: integer
     CourseId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    DeckId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    FlashcardId:
       name: id
       in: path
       required: true
@@ -521,4 +633,105 @@ components:
           type: boolean
         weeklyReflection:
           type: boolean
+    FlashcardDeck:
+      type: object
+      required: [id, title, description, cardCount, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        courseId:
+          type: [integer, "null"]
+        courseName:
+          type: [string, "null"]
+        cardCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    FlashcardDeckDetail:
+      allOf:
+        - $ref: "#/components/schemas/FlashcardDeck"
+        - type: object
+          required: [cards]
+          properties:
+            cards:
+              type: array
+              items:
+                $ref: "#/components/schemas/Flashcard"
+    Flashcard:
+      type: object
+      required: [id, deckId, front, back, confidence, createdAt]
+      properties:
+        id:
+          type: integer
+        deckId:
+          type: integer
+        front:
+          type: string
+        back:
+          type: string
+        confidence:
+          type: string
+          enum: [new, learning, mastered]
+        createdAt:
+          type: string
+          format: date-time
+    FlashcardDraft:
+      type: object
+      required: [front, back]
+      properties:
+        front:
+          type: string
+          minLength: 1
+        back:
+          type: string
+          minLength: 1
+    FlashcardDeckInput:
+      type: object
+      required: [title, cards]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        courseId:
+          type: [integer, "null"]
+        cards:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/FlashcardDraft"
+    FlashcardConfidenceUpdate:
+      type: object
+      required: [confidence]
+      properties:
+        confidence:
+          type: string
+          enum: [new, learning, mastered]
+    StudyAssistantInput:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+          minLength: 3
+        courseId:
+          type: [integer, "null"]
+    StudyAssistantResponse:
+      type: object
+      required: [answer, suggestedTitle, suggestedCards]
+      properties:
+        answer:
+          type: string
+        suggestedTitle:
+          type: string
+        suggestedCards:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlashcardDraft"
 

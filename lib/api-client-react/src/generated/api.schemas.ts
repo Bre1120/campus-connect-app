@@ -186,6 +186,83 @@ export interface PreferencesUpdate {
   weeklyReflection: boolean;
 }
 
+export interface FlashcardDeck {
+  id: number;
+  title: string;
+  description: string;
+  /** @nullable */
+  courseId?: number | null;
+  /** @nullable */
+  courseName?: string | null;
+  cardCount: number;
+  createdAt: string;
+}
+
+export type FlashcardConfidence = typeof FlashcardConfidence[keyof typeof FlashcardConfidence];
+
+
+export const FlashcardConfidence = {
+  new: 'new',
+  learning: 'learning',
+  mastered: 'mastered',
+} as const;
+
+export interface Flashcard {
+  id: number;
+  deckId: number;
+  front: string;
+  back: string;
+  confidence: FlashcardConfidence;
+  createdAt: string;
+}
+
+export type FlashcardDeckDetail = FlashcardDeck & {
+  cards: Flashcard[];
+};
+
+export interface FlashcardDraft {
+  /** @minLength 1 */
+  front: string;
+  /** @minLength 1 */
+  back: string;
+}
+
+export interface FlashcardDeckInput {
+  /** @minLength 1 */
+  title: string;
+  description?: string;
+  /** @nullable */
+  courseId?: number | null;
+  /** @minItems 1 */
+  cards: FlashcardDraft[];
+}
+
+export type FlashcardConfidenceUpdateConfidence = typeof FlashcardConfidenceUpdateConfidence[keyof typeof FlashcardConfidenceUpdateConfidence];
+
+
+export const FlashcardConfidenceUpdateConfidence = {
+  new: 'new',
+  learning: 'learning',
+  mastered: 'mastered',
+} as const;
+
+export interface FlashcardConfidenceUpdate {
+  confidence: FlashcardConfidenceUpdateConfidence;
+}
+
+export interface StudyAssistantInput {
+  /** @minLength 3 */
+  prompt: string;
+  /** @nullable */
+  courseId?: number | null;
+}
+
+export interface StudyAssistantResponse {
+  answer: string;
+  suggestedTitle: string;
+  suggestedCards: FlashcardDraft[];
+}
+
 export type ListTasksParams = {
 status?: ListTasksStatus;
 type?: ListTasksType;
