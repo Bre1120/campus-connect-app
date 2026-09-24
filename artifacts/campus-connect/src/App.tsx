@@ -7,11 +7,11 @@ import { ClerkProvider, Show, SignIn, SignUp, useAuth, useClerk, useUser } from 
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
-import { addDays, format, isSameDay, isToday, parseISO, startOfWeek } from 'date-fns';
+import { addDays, addMonths, subMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from 'date-fns';
 import {
   ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronRight,
-  Clock3, Flame, LayoutDashboard, ListTodo, LogOut, Menu,
-  Pencil, Plus, Search, Settings2, Sparkles, Trash2, UserRound, X,
+  ChevronLeft, Clock3, Flame, LayoutDashboard, ListTodo, LogOut, Menu,
+  Pencil, Plus, Search, Settings2, Sparkles, Trash2, UserRound, UsersRound, X,
 } from 'lucide-react';
 import {
   getGetDashboardQueryKey, getGetTaskQueryKey, getListCoursesQueryKey, getListTasksQueryKey,
@@ -28,6 +28,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { StudyStudioPage } from '@/pages/study-studio';
+import { CommunityPage } from '@/pages/community';
 import { LandingPage } from '@/pages/landing';
 
 const queryClient = new QueryClient();
@@ -100,7 +101,7 @@ function TaskRow({ task, onToggle, onEdit, onDelete, compact = false }: { task: 
     </div>
     <Badge className={`${typeColors[task.type]} hidden sm:inline-flex`}>{typeLabels[task.type]}</Badge>
     <span className={`hidden text-[11px] font-bold capitalize sm:block ${priorityColors[task.priority]}`}>{task.priority}</span>
-    <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+    <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
       <button type="button" aria-label={`Edit ${task.title}`} onClick={() => onEdit(task)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" data-testid={`button-edit-task-${task.id}`}><Pencil size={15} /></button>
       <button type="button" aria-label={`Delete ${task.title}`} onClick={() => onDelete(task)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" data-testid={`button-delete-task-${task.id}`}><Trash2 size={15} /></button>
     </div>
@@ -120,7 +121,7 @@ function EmptyState({ title, description, action }: { title: string; description
   </div>;
 }
 
-function TaskDialog({ open, onOpenChange, editingTask, courses }: { open: boolean; onOpenChange: (open: boolean) => void; editingTask: Task | null; courses: Course[] }) {
+function TaskDialog({ open, onOpenChange, editingTask, courses, initialDate }: { open: boolean; onOpenChange: (open: boolean) => void; editingTask: Task | null; courses: Course[]; initialDate?: string }) {
   const { toast } = useToast();
   const client = useQueryClient();
   const fetched = useGetTask(editingTask?.id ?? 0, { query: { enabled: !!editingTask, queryKey: getGetTaskQueryKey(editingTask?.id ?? 0) } });
@@ -128,13 +129,13 @@ function TaskDialog({ open, onOpenChange, editingTask, courses }: { open: boolea
   const update = useUpdateTask();
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: '', courseId: '', type: 'assignment', dueDate: format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' },
+    defaultValues: { title: '', courseId: '', type: 'assignment', dueDate: initialDate ?? format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' },
   });
   useEffect(() => {
     const task = fetched.data ?? editingTask;
     if (open && task) form.reset({ title: task.title, courseId: String(task.courseId), type: task.type, dueDate: task.dueDate, dueTime: task.dueTime ?? '', priority: task.priority, notes: task.notes ?? '' });
-    if (open && !editingTask) form.reset({ title: '', courseId: courses[0] ? String(courses[0].id) : '', type: 'assignment', dueDate: format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' });
-  }, [open, editingTask, fetched.data, courses, form]);
+    if (open && !editingTask) form.reset({ title: '', courseId: courses[0] ? String(courses[0].id) : '', type: 'assignment', dueDate: initialDate ?? format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' });
+  }, [open, editingTask, fetched.data, courses, form, initialDate]);
   const submit = (values: TaskFormValues) => {
     const data: TaskInput = { title: values.title, courseId: Number(values.courseId), type: values.type as TaskType, dueDate: values.dueDate, dueTime: values.dueTime || null, priority: values.priority, notes: values.notes || null };
     const done = () => { client.invalidateQueries({ queryKey: getListTasksQueryKey() }); client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); onOpenChange(false); toast({ title: editingTask ? 'Task updated' : 'Task added', description: 'Your study plan is up to date.' }); };
@@ -169,7 +170,8 @@ function AppShell({ children }: { children: ReactNode }) {
     { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
     { href: '/tasks', label: 'All tasks', icon: ListTodo },
     { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-    { href: '/study-studio', label: 'Study Studio', icon: Sparkles },
+    { href: '/study-studio', label: 'Flashcards & AI', icon: BookOpen },
+    { href: '/community', label: 'Community', icon: UsersRound },
   ];
   return <div className="cc-grain min-h-[100dvh] bg-background">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col bg-sidebar px-5 py-6 text-sidebar-foreground transition-transform duration-300 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -205,7 +207,8 @@ function DashboardPage() {
       <div className="rounded-2xl bg-sidebar p-6 text-sidebar-foreground shadow-lg sm:p-8"><div className="flex items-start justify-between"><div><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><Flame size={16} /> This week</div><h2 className="cc-display text-3xl font-semibold">Keep your rhythm.</h2><p className="mt-2 max-w-sm text-sm leading-6 text-sidebar-foreground/60">Small, consistent wins are what move a semester forward.</p></div><div className="grid size-16 place-items-center rounded-full border-[6px] border-primary/25 border-t-primary text-lg font-bold text-primary">{data?.completion.percentage ?? 0}%</div></div><div className="mt-7 grid grid-cols-7 gap-2">{(data?.completion.days ?? []).slice(0, 7).map((day, i) => <div key={day.date} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent p-1"><div className="flex h-full items-end"><div className="w-full rounded-full bg-primary" style={{ height: `${day.total ? Math.max(10, (day.completed / day.total) * 100) : 8}%` }} /></div></div><span className="text-[10px] font-semibold uppercase text-sidebar-foreground/45">{format(parseISO(day.date), 'EEEEE')}</span></div>)}{!data?.completion.days?.length ? Array.from({ length: 7 }).map((_, i) => <div key={i} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent" /><span className="text-[10px] text-sidebar-foreground/45">—</span></div>) : null}</div><div className="mt-5 flex items-center justify-between text-xs text-sidebar-foreground/55"><span>{data?.completion.completed ?? 0} completed</span><span>{data?.completion.total ?? 0} planned this week</span></div></div>
       <div className="flex flex-col gap-5">
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">A gentle nudge</p><h2 className="cc-display mt-2 text-2xl font-semibold">You’ve got this.</h2></div><span className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary"><Check size={19} /></span></div><p className="mt-4 text-sm leading-6 text-muted-foreground">Start with the task that takes less than 20 minutes. Momentum usually follows.</p><Link href="/tasks" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:gap-3" data-testid="link-view-plan">View your plan <ArrowRight size={16} /></Link></div>
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1 bg-gradient-to-br from-card to-secondary/10 border-secondary/30"><div className="flex items-start justify-between"><div><h2 className="cc-display mt-1 text-2xl font-semibold">Study Studio</h2></div><span className="grid size-10 place-items-center rounded-xl bg-secondary text-secondary-foreground"><Sparkles size={19} /></span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">Let AI generate flashcards or review your existing decks.</p><Link href="/study-studio" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-secondary-foreground hover:gap-3" data-testid="link-open-studio">Open Studio <ArrowRight size={16} /></Link></div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1 bg-gradient-to-br from-card to-secondary/10 border-secondary/30"><div className="flex items-start justify-between"><div><h2 className="cc-display mt-1 text-2xl font-semibold">Flashcards & AI</h2></div><span className="grid size-10 place-items-center rounded-xl bg-secondary text-secondary-foreground"><BookOpen size={19} /></span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">Build your own flashcards, generate them from notes, and study your decks.</p><Link href="/study-studio" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-secondary-foreground hover:gap-3" data-testid="link-open-studio">Study with flashcards <ArrowRight size={16} /></Link></div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1 bg-gradient-to-br from-card to-[#23746a]/10 border-[#23746a]/30"><div className="flex items-start justify-between"><div><h2 className="cc-display mt-1 text-2xl font-semibold">Community</h2></div><span className="grid size-10 place-items-center rounded-xl bg-[#23746a] text-primary-foreground"><UsersRound size={19} /></span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">Connect with peers, tutors, and advisors.</p><Link href="/community" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#23746a] hover:gap-3" data-testid="link-open-community">Join conversation <ArrowRight size={16} /></Link></div>
       </div>
     </section>
     <section className="grid gap-8 xl:grid-cols-[1.15fr_.85fr]">
@@ -239,13 +242,160 @@ function TasksPage() {
 
 function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
-  const [dialog, setDialog] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
+  const [selectedDay, setSelectedDay] = useState(new Date());
+  const [dialog, setDialog] = useState<{ open: boolean; task: Task | null; date?: string }>({ open: false, task: null });
+  
   const tasks = useListTasks();
   const courses = useListCourses();
-  const weekStart = startOfWeek(cursor, { weekStartsOn: 1 });
-  const week = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  
+  const client = useQueryClient();
+  const { toast } = useToast();
+  const toggle = useToggleTaskCompletion();
+  const del = useDeleteTask();
+
+  const toggleTask = (task: Task) => toggle.mutate({ id: task.id, data: { completed: !task.completed } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); client.invalidateQueries({ queryKey: getListTasksQueryKey() }); } });
+  const deleteTask = (task: Task) => { if (window.confirm(`Remove "${task.title}" from your plan?`)) del.mutate({ id: task.id }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); client.invalidateQueries({ queryKey: getListTasksQueryKey() }); toast({ title: 'Task removed' }); } }); };
+
+  const monthStart = startOfMonth(cursor);
+  const monthEnd = endOfMonth(cursor);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  
   const byDay = (day: Date) => (tasks.data ?? []).filter(task => isSameDay(parseISO(task.dueDate), day));
-  return <div className="cc-page space-y-7"><section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-primary">Make space for what matters</p><h1 className="cc-display mt-1 text-4xl font-semibold">Calendar</h1><p className="mt-2 text-sm text-muted-foreground">A week at a glance, without the overwhelm.</p></div><div className="flex gap-2"><AppButton variant="outline" onClick={() => setCursor(new Date())} data-testid="button-calendar-today">Today</AppButton><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-calendar"><Plus size={17} /> Add task</AppButton></div></section><div className="flex items-center justify-between"><button className="rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted" onClick={() => setCursor(addDays(cursor, -7))} data-testid="button-calendar-previous">Previous week</button><h2 className="cc-display text-xl font-semibold">{format(week[0], 'MMM d')} — {format(week[6], 'MMM d, yyyy')}</h2><button className="rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted" onClick={() => setCursor(addDays(cursor, 7))} data-testid="button-calendar-next">Next week</button></div><div className="grid gap-3 md:grid-cols-7">{week.map(day => <div key={day.toISOString()} className={`min-h-[230px] rounded-2xl border p-3 ${isToday(day) ? 'border-primary/60 bg-primary/5' : 'border-border bg-card'}`} data-testid={`day-calendar-${format(day, 'yyyy-MM-dd')}`}><div className="mb-4 flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">{format(day, 'EEE')}</span><span className={`grid size-7 place-items-center rounded-full text-sm font-bold ${isToday(day) ? 'bg-primary text-primary-foreground' : 'text-foreground'}`}>{format(day, 'd')}</span></div><div className="space-y-2">{tasks.isLoading ? <div className="h-14 animate-pulse rounded-xl bg-muted" /> : byDay(day).map(task => <div key={task.id} className={`rounded-xl p-2.5 ${typeColors[task.type]}`}><div className={`text-xs font-bold leading-4 ${task.completed ? 'line-through opacity-60' : ''}`}>{task.title}</div><div className="mt-1 text-[10px] font-semibold opacity-75">{task.courseCode}{task.dueTime ? ` · ${task.dueTime}` : ''}</div></div>)}{!tasks.isLoading && byDay(day).length === 0 ? <div className="pt-3 text-center text-[11px] text-muted-foreground/60">Clear</div> : null}</div></div>)}</div><TaskDialog open={dialog.open} onOpenChange={open => setDialog({ ...dialog, open })} editingTask={dialog.task} courses={courses.data ?? []} /></div>;
+  const selectedDayTasks = byDay(selectedDay);
+  
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+  
+  const upcomingTasks = (tasks.data ?? [])
+    .filter(task => !task.completed && parseISO(task.dueDate) > endOfToday)
+    .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
+    .slice(0, 4);
+
+  return <div className="cc-page space-y-7 pb-12">
+    <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <p className="text-sm font-semibold text-primary">Make space for what matters</p>
+        <h1 className="cc-display mt-1 text-4xl font-semibold">Calendar</h1>
+        <p className="mt-2 text-sm text-muted-foreground">The big picture of your semester.</p>
+      </div>
+      <div className="flex gap-2">
+        <AppButton variant="outline" onClick={() => { setCursor(new Date()); setSelectedDay(new Date()); }} data-testid="button-calendar-today">Today</AppButton>
+        <AppButton onClick={() => setDialog({ open: true, task: null, date: format(selectedDay, 'yyyy-MM-dd') })} data-testid="button-add-task-calendar"><Plus size={17} /> Add task</AppButton>
+      </div>
+    </section>
+
+    <div className="grid gap-8 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px]">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <button className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setCursor(subMonths(cursor, 1))} data-testid="button-calendar-prev-month"><ChevronLeft size={20} /></button>
+          <h2 className="cc-display text-2xl font-semibold tracking-tight">{format(cursor, 'MMMM yyyy')}</h2>
+          <button className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setCursor(addMonths(cursor, 1))} data-testid="button-calendar-next-month"><ChevronRight size={20} /></button>
+        </div>
+        
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="mb-2 grid grid-cols-7 gap-1 text-center">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => <div key={day} className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">{day}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {calendarDays.map(day => {
+              const dayTasks = byDay(day);
+              const isSelected = isSameDay(day, selectedDay);
+              const isCurrentMonth = isSameMonth(day, cursor);
+              const isTodayDate = isToday(day);
+              return <button 
+                key={day.toISOString()} 
+                onClick={() => { setSelectedDay(day); if (!isCurrentMonth) setCursor(day); }}
+                aria-label={`${format(day, 'EEEE, MMMM d, yyyy')}, ${dayTasks.length} ${dayTasks.length === 1 ? 'task' : 'tasks'}`}
+                aria-pressed={isSelected}
+                className={`relative flex min-h-12 flex-col items-center justify-start overflow-hidden rounded-xl border p-1.5 transition-all sm:h-24 sm:items-start sm:p-2.5 ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : isTodayDate ? 'border-primary/40 bg-primary/5 hover:border-primary/60' : 'border-border/50 bg-card hover:border-border hover:bg-muted/50'} ${!isCurrentMonth && !isSelected ? 'opacity-40' : ''}`}
+                data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
+              >
+                <div className="flex w-full items-center justify-center sm:justify-between">
+                  <span className={`text-sm font-semibold sm:text-base ${isSelected || isTodayDate ? 'text-primary' : 'text-foreground'}`}>{format(day, 'd')}</span>
+                  {dayTasks.length > 0 ? <span className="hidden text-[10px] font-bold text-muted-foreground sm:block">{dayTasks.length} {dayTasks.length === 1 ? 'task' : 'tasks'}</span> : null}
+                </div>
+                
+                {/* Mobile indicators */}
+                <div className="mt-1 flex flex-wrap justify-center gap-1 sm:hidden">
+                  {dayTasks.slice(0, 3).map((t, i) => <div key={i} className={`size-1.5 rounded-full bg-current ${typeColors[t.type].split(' ')[1]}`} />)}
+                  {dayTasks.length > 3 ? <div className="size-1.5 rounded-full bg-muted-foreground" /> : null}
+                </div>
+                
+                {/* Desktop task list */}
+                <div className="mt-2 hidden w-full flex-col gap-1 sm:flex">
+                  {dayTasks.slice(0, 2).map((t) => (
+                    <div key={t.id} className={`w-full truncate rounded px-1.5 py-0.5 text-[10px] font-bold ${typeColors[t.type]} ${t.completed ? 'opacity-50 line-through' : ''}`}>
+                      {t.title}
+                    </div>
+                  ))}
+                  {dayTasks.length > 2 ? <div className="pl-1 text-[10px] font-semibold text-muted-foreground">+{dayTasks.length - 2} more</div> : null}
+                </div>
+              </button>;
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="cc-display text-2xl font-semibold">
+                {isToday(selectedDay) ? 'Today’s Agenda' : format(selectedDay, 'EEEE, MMM d')}
+              </h3>
+            </div>
+            <AppButton variant="outline" aria-label={`Add task for ${format(selectedDay, 'MMMM d')}`} onClick={() => setDialog({ open: true, task: null, date: format(selectedDay, 'yyyy-MM-dd') })} data-testid="button-add-task-agenda"><Plus size={16} /></AppButton>
+          </div>
+          
+          <div className="space-y-1">
+            {tasks.isLoading ? <TaskSkeleton rows={3} /> : tasks.isError ? (
+              <div className="py-6 text-sm text-destructive" role="alert">Could not load your calendar. <button type="button" className="font-bold underline" onClick={() => tasks.refetch()}>Try again</button></div>
+            ) : selectedDayTasks.length > 0 ? (
+              selectedDayTasks.map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} />)
+            ) : (
+              <EmptyState 
+                title="Clear schedule" 
+                description="No tasks due on this date." 
+                action={<AppButton onClick={() => setDialog({ open: true, task: null, date: format(selectedDay, 'yyyy-MM-dd') })}><Plus size={16} /> Add a task</AppButton>}
+              />
+            )}
+          </div>
+        </div>
+
+        {upcomingTasks.length > 0 && (
+          <div className="rounded-2xl border border-border bg-sidebar p-5 text-sidebar-foreground shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Flame size={18} className="text-primary" />
+              <h3 className="cc-display text-xl font-semibold">Upcoming deadlines</h3>
+            </div>
+            <div className="space-y-4">
+              {upcomingTasks.map(task => (
+                <div key={task.id} className="flex items-start gap-3 border-b border-sidebar-border/50 pb-4 last:border-0 last:pb-0">
+                  <button type="button" onClick={() => toggleTask(task)} aria-label={`Complete ${task.title}`} className="group mt-2 grid size-7 shrink-0 place-items-center rounded-full border border-sidebar-foreground/40 hover:border-primary hover:bg-primary/20" data-testid={`button-upcoming-complete-${task.id}`}><Check size={14} className="opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" /></button>
+                  <div className="mt-0.5 flex flex-col items-center justify-center rounded-lg bg-sidebar-accent px-2 py-1 text-center">
+                    <span className="text-[10px] font-bold uppercase text-sidebar-foreground/60">{format(parseISO(task.dueDate), 'MMM')}</span>
+                    <span className="text-sm font-semibold">{format(parseISO(task.dueDate), 'd')}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">{task.title}</div>
+                    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-sidebar-foreground/70">
+                      <span className="font-bold text-sidebar-primary">{task.courseCode}</span>
+                      <span>•</span>
+                      <span>{typeLabels[task.type]}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link href="/study-studio" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"><BookOpen size={16} /> Study with flashcards <ArrowRight size={15} /></Link>
+          </div>
+        )}
+      </div>
+    </div>
+    <TaskDialog open={dialog.open} onOpenChange={open => setDialog(prev => ({ ...prev, open }))} editingTask={dialog.task} courses={courses.data ?? []} initialDate={dialog.date} />
+  </div>;
 }
 
 function CourseManager({ courses }: { courses: Course[] }) {
@@ -312,7 +462,7 @@ function Protected({ children }: { children: ReactNode }) {
 }
 
 function Router() {
-  return <Switch><Route path="/" component={LandingPage} /><Route path="/sign-in/*?" component={() => <AuthPage mode="sign-in" />} /><Route path="/sign-up/*?" component={() => <AuthPage mode="sign-up" />} /><Route path="/dashboard" component={() => <Protected><AppShell><DashboardPage /></AppShell></Protected>} /><Route path="/tasks" component={() => <Protected><AppShell><TasksPage /></AppShell></Protected>} /><Route path="/calendar" component={() => <Protected><AppShell><CalendarPage /></AppShell></Protected>} /><Route path="/study-studio" component={() => <Protected><AppShell><StudyStudioPage /></AppShell></Protected>} /><Route path="/profile" component={() => <Protected><AppShell><ProfilePage /></AppShell></Protected>} /><Route path="/settings" component={() => <Protected><AppShell><SettingsPage /></AppShell></Protected>} /><Route component={() => <div className="p-10">Page not found. <Link href="/">Go home</Link></div>} /></Switch>;
+  return <Switch><Route path="/" component={LandingPage} /><Route path="/sign-in/*?" component={() => <AuthPage mode="sign-in" />} /><Route path="/sign-up/*?" component={() => <AuthPage mode="sign-up" />} /><Route path="/dashboard" component={() => <Protected><AppShell><DashboardPage /></AppShell></Protected>} /><Route path="/tasks" component={() => <Protected><AppShell><TasksPage /></AppShell></Protected>} /><Route path="/calendar" component={() => <Protected><AppShell><CalendarPage /></AppShell></Protected>} /><Route path="/study-studio" component={() => <Protected><AppShell><StudyStudioPage /></AppShell></Protected>} /><Route path="/community" component={() => <Protected><AppShell><CommunityPage /></AppShell></Protected>} /><Route path="/profile" component={() => <Protected><AppShell><ProfilePage /></AppShell></Protected>} /><Route path="/settings" component={() => <Protected><AppShell><SettingsPage /></AppShell></Protected>} /><Route component={() => <div className="p-10">Page not found. <Link href="/">Go home</Link></div>} /></Switch>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {

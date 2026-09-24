@@ -20,6 +20,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CommunityMessage,
+  CommunityMessageInput,
+  CommunityReportInput,
+  CommunityReportReceipt,
   Course,
   CourseInput,
   CourseUpdate,
@@ -30,6 +34,7 @@ import type {
   FlashcardDeckDetail,
   FlashcardDeckInput,
   HealthStatus,
+  ListCommunityMessagesParams,
   ListTasksParams,
   Preferences,
   PreferencesUpdate,
@@ -1697,5 +1702,303 @@ export const useAskStudyAssistant = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAskStudyAssistantMutationOptions(options));
+    }
+
+export const getListCommunityMessagesUrl = (params: ListCommunityMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/community/messages?${stringifiedParams}` : `/api/community/messages`
+}
+
+/**
+ * @summary Read messages in a community room
+ */
+export const listCommunityMessages = async (params: ListCommunityMessagesParams, options?: Parameters<typeof customFetch>[1]): Promise<CommunityMessage[]> => {
+
+  return customFetch<CommunityMessage[]>(getListCommunityMessagesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCommunityMessagesQueryKey = (params?: ListCommunityMessagesParams,) => {
+    return [
+    `/api/community/messages`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListCommunityMessagesQueryOptions = <TData = Awaited<ReturnType<typeof listCommunityMessages>>, TError = ErrorType<unknown>>(params: ListCommunityMessagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCommunityMessages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCommunityMessagesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommunityMessages>>> = ({ signal }) => listCommunityMessages(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCommunityMessages>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCommunityMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listCommunityMessages>>>
+export type ListCommunityMessagesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Read messages in a community room
+ */
+
+export function useListCommunityMessages<TData = Awaited<ReturnType<typeof listCommunityMessages>>, TError = ErrorType<unknown>>(
+ params: ListCommunityMessagesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCommunityMessages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCommunityMessagesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateCommunityMessageUrl = () => {
+
+
+
+
+  return `/api/community/messages`
+}
+
+/**
+ * @summary Send a message to a community room
+ */
+export const createCommunityMessage = async (communityMessageInput: CommunityMessageInput, options?: Parameters<typeof customFetch>[1]): Promise<CommunityMessage> => {
+
+  return customFetch<CommunityMessage>(getCreateCommunityMessageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(communityMessageInput)
+  }
+);}
+
+
+
+
+
+export const getCreateCommunityMessageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunityMessage>>, TError,{data: BodyType<CommunityMessageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCommunityMessage>>, TError,{data: BodyType<CommunityMessageInput>}, TContext> => {
+
+const mutationKey = ['createCommunityMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCommunityMessage>>, {data: BodyType<CommunityMessageInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCommunityMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCommunityMessageMutationResult = NonNullable<Awaited<ReturnType<typeof createCommunityMessage>>>
+    export type CreateCommunityMessageMutationBody = BodyType<CommunityMessageInput>
+    export type CreateCommunityMessageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Send a message to a community room
+ */
+export const useCreateCommunityMessage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommunityMessage>>, TError,{data: BodyType<CommunityMessageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCommunityMessage>>,
+        TError,
+        {data: BodyType<CommunityMessageInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCommunityMessageMutationOptions(options));
+    }
+
+export const getDeleteCommunityMessageUrl = (id: number,) => {
+
+
+
+
+  return `/api/community/messages/${id}`
+}
+
+/**
+ * @summary Delete one of your own messages
+ */
+export const deleteCommunityMessage = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteCommunityMessageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteCommunityMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCommunityMessage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCommunityMessage>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteCommunityMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCommunityMessage>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteCommunityMessage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCommunityMessageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCommunityMessage>>>
+
+    export type DeleteCommunityMessageMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete one of your own messages
+ */
+export const useDeleteCommunityMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCommunityMessage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCommunityMessage>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteCommunityMessageMutationOptions(options));
+    }
+
+export const getReportCommunityMessageUrl = (id: number,) => {
+
+
+
+
+  return `/api/community/messages/${id}/report`
+}
+
+/**
+ * @summary Report another user's message
+ */
+export const reportCommunityMessage = async (id: number,
+    communityReportInput: CommunityReportInput, options?: Parameters<typeof customFetch>[1]): Promise<CommunityReportReceipt> => {
+
+  return customFetch<CommunityReportReceipt>(getReportCommunityMessageUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(communityReportInput)
+  }
+);}
+
+
+
+
+
+export const getReportCommunityMessageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportCommunityMessage>>, TError,{id: number;data: BodyType<CommunityReportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reportCommunityMessage>>, TError,{id: number;data: BodyType<CommunityReportInput>}, TContext> => {
+
+const mutationKey = ['reportCommunityMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportCommunityMessage>>, {id: number;data: BodyType<CommunityReportInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reportCommunityMessage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReportCommunityMessageMutationResult = NonNullable<Awaited<ReturnType<typeof reportCommunityMessage>>>
+    export type ReportCommunityMessageMutationBody = BodyType<CommunityReportInput>
+    export type ReportCommunityMessageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Report another user's message
+ */
+export const useReportCommunityMessage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportCommunityMessage>>, TError,{id: number;data: BodyType<CommunityReportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reportCommunityMessage>>,
+        TError,
+        {id: number;data: BodyType<CommunityReportInput>},
+        TContext
+      > => {
+      return useMutation(getReportCommunityMessageMutationOptions(options));
     }
 

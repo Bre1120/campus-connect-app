@@ -6,6 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './communityMessage';
+export * from './communityMessageAuthorRole';
+export * from './communityMessageInput';
+export * from './communityMessageInputAuthorRole';
+export * from './communityMessageInputRoom';
+export * from './communityMessageRoom';
+export * from './communityReportInput';
+export * from './communityReportInputReason';
+export * from './communityReportReceipt';
 export * from './completionDay';
 export * from './completionSummary';
 export * from './course';
@@ -21,6 +30,8 @@ export * from './flashcardDeckDetail';
 export * from './flashcardDeckInput';
 export * from './flashcardDraft';
 export * from './healthStatus';
+export * from './listCommunityMessagesParams';
+export * from './listCommunityMessagesRoom';
 export * from './listTasksParams';
 export * from './listTasksStatus';
 export * from './listTasksType';

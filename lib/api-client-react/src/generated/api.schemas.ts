@@ -263,6 +263,78 @@ export interface StudyAssistantResponse {
   suggestedCards: FlashcardDraft[];
 }
 
+export type CommunityMessageRoom = typeof CommunityMessageRoom[keyof typeof CommunityMessageRoom];
+
+
+export const CommunityMessageRoom = {
+  students: 'students',
+  help: 'help',
+} as const;
+
+export type CommunityMessageAuthorRole = typeof CommunityMessageAuthorRole[keyof typeof CommunityMessageAuthorRole];
+
+
+export const CommunityMessageAuthorRole = {
+  student: 'student',
+  tutor: 'tutor',
+  advisor: 'advisor',
+} as const;
+
+export interface CommunityMessage {
+  id: number;
+  room: CommunityMessageRoom;
+  body: string;
+  authorName: string;
+  authorRole: CommunityMessageAuthorRole;
+  isMine: boolean;
+  createdAt: string;
+}
+
+export type CommunityMessageInputRoom = typeof CommunityMessageInputRoom[keyof typeof CommunityMessageInputRoom];
+
+
+export const CommunityMessageInputRoom = {
+  students: 'students',
+  help: 'help',
+} as const;
+
+export type CommunityMessageInputAuthorRole = typeof CommunityMessageInputAuthorRole[keyof typeof CommunityMessageInputAuthorRole];
+
+
+export const CommunityMessageInputAuthorRole = {
+  student: 'student',
+  tutor: 'tutor',
+  advisor: 'advisor',
+} as const;
+
+export interface CommunityMessageInput {
+  room: CommunityMessageInputRoom;
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  body: string;
+  authorRole: CommunityMessageInputAuthorRole;
+}
+
+export type CommunityReportInputReason = typeof CommunityReportInputReason[keyof typeof CommunityReportInputReason];
+
+
+export const CommunityReportInputReason = {
+  harassment: 'harassment',
+  spam: 'spam',
+  unsafe: 'unsafe',
+  other: 'other',
+} as const;
+
+export interface CommunityReportInput {
+  reason: CommunityReportInputReason;
+}
+
+export interface CommunityReportReceipt {
+  received: boolean;
+}
+
 export type ListTasksParams = {
 status?: ListTasksStatus;
 type?: ListTasksType;
@@ -289,5 +361,17 @@ export const ListTasksType = {
   project: 'project',
   reading: 'reading',
   other: 'other',
+} as const;
+
+export type ListCommunityMessagesParams = {
+room: ListCommunityMessagesRoom;
+};
+
+export type ListCommunityMessagesRoom = typeof ListCommunityMessagesRoom[keyof typeof ListCommunityMessagesRoom];
+
+
+export const ListCommunityMessagesRoom = {
+  students: 'students',
+  help: 'help',
 } as const;
 

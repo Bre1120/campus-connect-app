@@ -6,6 +6,7 @@ import dashboardRouter from "./dashboard";
 import profileRouter from "./profile";
 import flashcardsRouter from "./flashcards";
 import studyAssistantRouter from "./study-assistant";
+import communityRouter from "./community";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(dashboardRouter);
 router.use(profileRouter);
 router.use(flashcardsRouter);
 router.use(studyAssistantRouter);
+router.use(communityRouter);
 
 export default router;

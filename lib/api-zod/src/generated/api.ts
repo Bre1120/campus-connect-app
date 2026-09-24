@@ -489,3 +489,72 @@ export const AskStudyAssistantResponse = zod.object({
 })
 
 
+/**
+ * @summary Read messages in a community room
+ */
+export const ListCommunityMessagesQueryParams = zod.object({
+  "room": zod.enum(['students', 'help'])
+})
+
+export const ListCommunityMessagesResponseItem = zod.object({
+  "id": zod.int(),
+  "room": zod.enum(['students', 'help']),
+  "body": zod.string(),
+  "authorName": zod.string(),
+  "authorRole": zod.enum(['student', 'tutor', 'advisor']),
+  "isMine": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const ListCommunityMessagesResponse = zod.array(ListCommunityMessagesResponseItem)
+
+
+/**
+ * @summary Send a message to a community room
+ */
+export const createCommunityMessageBodyBodyMax = 1000;
+
+
+
+export const CreateCommunityMessageBody = zod.object({
+  "room": zod.enum(['students', 'help']),
+  "body": zod.string().min(1).max(createCommunityMessageBodyBodyMax),
+  "authorRole": zod.enum(['student', 'tutor', 'advisor'])
+})
+
+export const CreateCommunityMessageResponse = zod.object({
+  "id": zod.int(),
+  "room": zod.enum(['students', 'help']),
+  "body": zod.string(),
+  "authorName": zod.string(),
+  "authorRole": zod.enum(['student', 'tutor', 'advisor']),
+  "isMine": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete one of your own messages
+ */
+export const DeleteCommunityMessageParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteCommunityMessageResponse = zod.void()
+
+
+/**
+ * @summary Report another user's message
+ */
+export const ReportCommunityMessageParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const ReportCommunityMessageBody = zod.object({
+  "reason": zod.enum(['harassment', 'spam', 'unsafe', 'other'])
+})
+
+export const ReportCommunityMessageResponse = zod.object({
+  "received": zod.boolean()
+})
+
+

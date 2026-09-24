@@ -20,6 +20,8 @@ tags:
     description: Student profile and preferences
   - name: study-tools
     description: Flashcards, reviews, and AI study support
+  - name: community
+    description: Student and volunteer help conversations
 paths:
   /healthz:
     get:
@@ -397,6 +399,76 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StudyAssistantResponse"
+  /community/messages:
+    get:
+      operationId: listCommunityMessages
+      tags: [community]
+      summary: Read messages in a community room
+      parameters:
+        - name: room
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [students, help]
+      responses:
+        "200":
+          description: Recent messages, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityMessage"
+    post:
+      operationId: createCommunityMessage
+      tags: [community]
+      summary: Send a message to a community room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityMessageInput"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityMessage"
+  /community/messages/{id}:
+    delete:
+      operationId: deleteCommunityMessage
+      tags: [community]
+      summary: Delete one of your own messages
+      parameters:
+        - $ref: "#/components/parameters/CommunityMessageId"
+      responses:
+        "204":
+          description: Message deleted
+        "404":
+          description: Message not found
+  /community/messages/{id}/report:
+    post:
+      operationId: reportCommunityMessage
+      tags: [community]
+      summary: Report another user's message
+      parameters:
+        - $ref: "#/components/parameters/CommunityMessageId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommunityReportInput"
+      responses:
+        "201":
+          description: Report received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityReportReceipt"
 components:
   parameters:
     TaskId:
@@ -418,6 +490,12 @@ components:
       schema:
         type: integer
     FlashcardId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    CommunityMessageId:
       name: id
       in: path
       required: true
@@ -734,4 +812,47 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FlashcardDraft"
+    CommunityMessage:
+      type: object
+      required: [id, room, body, authorName, authorRole, isMine, createdAt]
+      properties:
+        id: { type: integer }
+        room:
+          type: string
+          enum: [students, help]
+        body: { type: string }
+        authorName: { type: string }
+        authorRole:
+          type: string
+          enum: [student, tutor, advisor]
+        isMine: { type: boolean }
+        createdAt:
+          type: string
+          format: date-time
+    CommunityMessageInput:
+      type: object
+      required: [room, body, authorRole]
+      properties:
+        room:
+          type: string
+          enum: [students, help]
+        body:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        authorRole:
+          type: string
+          enum: [student, tutor, advisor]
+    CommunityReportInput:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [harassment, spam, unsafe, other]
+    CommunityReportReceipt:
+      type: object
+      required: [received]
+      properties:
+        received: { type: boolean }
 
