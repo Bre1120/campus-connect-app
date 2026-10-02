@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@clerk/react';
 import { Link, Redirect } from 'wouter';
-import { ArrowRight, BookOpen, Clock3, CalendarDays, ListTodo, Bot, Star, Quote } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock3, CalendarDays, ListTodo, Bot, Quote } from 'lucide-react';
 
 function Logo({ inverse = false }: { inverse?: boolean }) {
   return (
@@ -156,35 +156,41 @@ export function LandingPage() {
         </section>
 
         {/* Testimonials */}
-        <section className="border-t border-border bg-sidebar py-24 text-sidebar-foreground">
+        <section id="student-feedback" className="border-t border-border bg-sidebar py-24 text-sidebar-foreground">
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="mb-16 text-center">
               <h2 className="cc-display text-4xl font-semibold sm:text-5xl">What students are saying</h2>
+              <p className="mt-4 text-sidebar-foreground/60">10 responses to “What did you like most about the app?”</p>
             </div>
             
             <div className="grid gap-6 md:grid-cols-3">
               {[
-                { name: "Sarah J.", major: "Pre-Med", quote: "The Study Studio changed how I prep for anatomy. I just paste my notes and the AI builds my flashcards instantly." },
-                { name: "Marcus T.", major: "Computer Science", quote: "Finally, a planner that doesn't feel like a corporate dashboard. It's actually calming to open this app every morning." },
-                { name: "Elena R.", major: "Literature", quote: "Keeping my reading assignments and study materials in one place has saved me hours of context switching." }
-              ].map((t, i) => (
-                <div key={i} className="flex flex-col justify-between rounded-3xl bg-sidebar-accent p-8">
+                "How effective it has been to help me study",
+                "I despise working with different apps than the ones I’m use to , I love that this one was easy",
+                "Very easy to access and go around in",
+                "The details",
+                "It was very easy to navigate.",
+                "I like it sets a plan to make flash cards for you so you can study",
+                "Everything",
+                "How easy to use it is",
+                "Very simple to use",
+                "Study Studio",
+              ].map((quote, i) => (
+                <figure key={i} className="m-0 flex min-w-0 flex-col justify-between rounded-3xl bg-sidebar-accent p-8" data-testid={`student-feedback-${i + 1}`}>
                   <div>
-                    <div className="flex gap-1 text-primary mb-6">
-                      {[1,2,3,4,5].map(s => <Star key={s} size={16} fill="currentColor" />)}
-                    </div>
-                    <p className="text-lg leading-relaxed mb-8">"{t.quote}"</p>
+                    <Quote size={24} className="mb-6 text-primary" aria-hidden="true" />
+                    <blockquote className="mb-8 break-words text-lg leading-relaxed">“{quote}”</blockquote>
                   </div>
-                  <div className="flex items-center gap-4 border-t border-sidebar-border pt-6">
+                  <figcaption className="flex items-center gap-4 border-t border-sidebar-border pt-6">
                     <div className="grid size-12 place-items-center rounded-full bg-primary/20 text-xl font-bold text-primary">
-                      {t.name.charAt(0)}
+                      S
                     </div>
                     <div>
-                      <div className="font-bold">{t.name}</div>
-                      <div className="text-sm text-sidebar-foreground/60">{t.major}</div>
+                      <div className="font-bold">Student</div>
+                      <div className="text-sm text-sidebar-foreground/60">Anonymous survey response</div>
                     </div>
-                  </div>
-                </div>
+                  </figcaption>
+                </figure>
               ))}
             </div>
           </div>
