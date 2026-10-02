@@ -208,8 +208,18 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="mx-auto flex max-w-6xl items-center justify-between border-t border-border px-5 py-8 text-sm font-medium text-muted-foreground sm:px-8">
+      <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 border-t border-border px-5 py-8 text-sm font-medium text-muted-foreground sm:flex-row sm:flex-wrap sm:px-8">
         <Logo />
+        <a
+          href="https://docs.google.com/forms/d/e/1FAIpQLSd9gYj6njHFB9V1_EN0djNRcLPjx865jcvqEP8M1owrl89r9Q/viewform?usp=header"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Feedback survey (opens in a new tab)"
+          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 font-semibold text-primary hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          data-testid="link-landing-feedback-survey"
+        >
+          Feedback survey <ArrowRight size={15} className="-rotate-45" />
+        </a>
         <span>Made for the long semester.</span>
       </footer>
     </div>

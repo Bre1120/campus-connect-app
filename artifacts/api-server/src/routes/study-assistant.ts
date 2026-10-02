@@ -11,8 +11,12 @@ import {
   AskStudyAssistantResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
+import OpenAI from "openai";
+import { buildStudyMessages, studyResponseFormat } from "../lib/study-coach";
 
 const router: IRouter = Router();
+const activeRequests = new Set<string>();
+let client: OpenAI | undefined;
 
 router.post(
   "/ai/study-assistant",
@@ -24,13 +28,30 @@ router.post(
       return;
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const managedBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+    const managedApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    const useManagedAI = Boolean(managedBaseUrl && managedApiKey);
+    const apiKey = useManagedAI ? managedApiKey : process.env.OPENAI_API_KEY;
     if (!apiKey) {
       res.status(503).json({ error: "AI assistant is not configured" });
       return;
     }
 
     const ownerId = res.locals.userId as string;
+    if (activeRequests.has(ownerId)) {
+      res.status(429).json({ error: "Your assistant is still answering. Please wait before asking again." });
+      return;
+    }
+    if (parsed.data.prompt.trim().length < 3) {
+      res.status(400).json({ error: "Please enter a question with at least 3 characters." });
+      return;
+    }
+    if ((parsed.data.history ?? []).reduce((total, message) => total + message.content.length, 0) > 160000) {
+      res.status(400).json({ error: "This conversation is too long. Start a new conversation and try again." });
+      return;
+    }
+    activeRequests.add(ownerId);
+    try {
     const [profile] = await db
       .select()
       .from(profilesTable)
@@ -79,6 +100,7 @@ router.post(
       (course) => course.id === parsed.data.courseId,
     );
     const studentContext = {
+      today: new Date().toISOString().slice(0, 10),
       name: profile?.displayName || "Student",
       major: profile?.major || "Not provided",
       year: profile?.year || "Not provided",
@@ -87,57 +109,36 @@ router.post(
       upcomingTasks,
     };
 
-    try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      client ??= new OpenAI({
+        apiKey,
+        ...(useManagedAI ? { baseURL: managedBaseUrl } : {}),
+        timeout: 45000,
+        maxRetries: 1,
+      });
+      const response = await client.chat.completions.create({
           model: "gpt-5-mini",
+          reasoning_effort: "low",
           max_completion_tokens: 8192,
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are Campus Connect's supportive college study coach. Give focused, practical academic guidance using the provided student context. Return only valid JSON with exactly these keys: answer (string, concise and skimmable), suggestedTitle (string), suggestedCards (array of 3 to 6 objects with front and back strings). Flashcards must directly reinforce the user's request. Never invent course facts when the user has not supplied subject content; in that case make cards about study strategy or ask the student to paste notes.",
-            },
-            {
-              role: "user",
-              content: JSON.stringify({
-                studentContext,
-                request: parsed.data.prompt,
-              }),
-            },
-          ],
-        }),
+          response_format: studyResponseFormat,
+          messages: buildStudyMessages(studentContext, parsed.data.prompt, parsed.data.history),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        req.log.error(
-          { status: response.status, body: errorText.slice(0, 500) },
-          "OpenAI study assistant request failed",
-        );
-        res.status(502).json({ error: "The AI assistant could not respond" });
+      const choice = response.choices[0];
+      const content = choice?.message.content;
+      if (!content || choice.finish_reason !== "stop") {
+        res.status(502).json({ error: "The assistant couldn't finish this answer. Try a shorter question or fewer notes." });
         return;
       }
 
-      const payload = (await response.json()) as {
-        choices?: Array<{ message?: { content?: string | null } }>;
-      };
-      const content = payload.choices?.[0]?.message?.content;
-      if (!content) {
-        res.status(502).json({ error: "The AI assistant returned no response" });
-        return;
-      }
-
-      const result = AskStudyAssistantResponse.safeParse(JSON.parse(content));
+      const decoded = JSON.parse(content);
+      const result = AskStudyAssistantResponse.safeParse({
+        ...decoded,
+        answer: typeof decoded.answer === "string" ? decoded.answer.trim() : decoded.answer,
+        suggestedTitle: typeof decoded.suggestedTitle === "string" ? decoded.suggestedTitle.trim() : decoded.suggestedTitle,
+      });
       if (!result.success) {
         req.log.error(
-          { issues: result.error.issues },
+          { issueCount: result.error.issues.length },
           "OpenAI study assistant response validation failed",
         );
         res.status(502).json({ error: "The AI response was not usable" });
@@ -146,8 +147,19 @@ router.post(
 
       res.json(result.data);
     } catch (error) {
-      req.log.error({ error }, "OpenAI study assistant request failed");
-      res.status(502).json({ error: "The AI assistant could not respond" });
+      const status = error instanceof OpenAI.APIError ? error.status : undefined;
+      req.log.error({ status, errorType: error instanceof Error ? error.name : "Unknown" }, "Study assistant request failed");
+      if (error instanceof OpenAI.APIConnectionTimeoutError) {
+        res.status(504).json({ error: "The assistant took too long to answer. Try again with a shorter question." });
+      } else if (status === 429) {
+        res.status(503).json({ error: "The AI service is busy or its usage limit has been reached. Please try again later." });
+      } else if (status === 401 || status === 403) {
+        res.status(503).json({ error: "The AI service needs attention from the app owner. Please try again later." });
+      } else {
+        res.status(502).json({ error: "The assistant couldn't respond. Your question is still here—please try again." });
+      }
+    } finally {
+      activeRequests.delete(ownerId);
     }
   },
 );

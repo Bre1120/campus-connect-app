@@ -8,7 +8,13 @@
 import type { FlashcardDraft } from './flashcardDraft';
 
 export interface StudyAssistantResponse {
+  /** @minLength 1 */
   answer: string;
+  /**
+     * @minLength 1
+     * @maxLength 140
+     */
   suggestedTitle: string;
+  /** @maxItems 12 */
   suggestedCards: FlashcardDraft[];
 }

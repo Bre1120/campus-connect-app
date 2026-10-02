@@ -250,16 +250,44 @@ export interface FlashcardConfidenceUpdate {
   confidence: FlashcardConfidenceUpdateConfidence;
 }
 
+export type StudyAssistantInputHistoryItemRole = typeof StudyAssistantInputHistoryItemRole[keyof typeof StudyAssistantInputHistoryItemRole];
+
+
+export const StudyAssistantInputHistoryItemRole = {
+  user: 'user',
+  assistant: 'assistant',
+} as const;
+
+export type StudyAssistantInputHistoryItem = {
+  role: StudyAssistantInputHistoryItemRole;
+  /**
+     * @minLength 1
+     * @maxLength 24000
+     */
+  content: string;
+};
+
 export interface StudyAssistantInput {
-  /** @minLength 3 */
+  /**
+     * @minLength 3
+     * @maxLength 12000
+     */
   prompt: string;
   /** @nullable */
   courseId?: number | null;
+  /** @maxItems 12 */
+  history?: StudyAssistantInputHistoryItem[];
 }
 
 export interface StudyAssistantResponse {
+  /** @minLength 1 */
   answer: string;
+  /**
+     * @minLength 1
+     * @maxLength 140
+     */
   suggestedTitle: string;
+  /** @maxItems 12 */
   suggestedCards: FlashcardDraft[];
 }
 

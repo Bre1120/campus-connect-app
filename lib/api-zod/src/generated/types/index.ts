@@ -40,6 +40,8 @@ export * from './preferencesUpdate';
 export * from './profile';
 export * from './profileUpdate';
 export * from './studyAssistantInput';
+export * from './studyAssistantInputHistoryItem';
+export * from './studyAssistantInputHistoryItemRole';
 export * from './studyAssistantResponse';
 export * from './task';
 export * from './taskCompletionInput';

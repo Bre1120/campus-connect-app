@@ -5,10 +5,16 @@
  * Campus Connect academic organization API
  * OpenAPI spec version: 0.1.0
  */
+import type { StudyAssistantInputHistoryItem } from './studyAssistantInputHistoryItem';
 
 export interface StudyAssistantInput {
-  /** @minLength 3 */
+  /**
+     * @minLength 3
+     * @maxLength 12000
+     */
   prompt: string;
   /** @nullable */
   courseId?: number | null;
+  /** @maxItems 12 */
+  history?: StudyAssistantInputHistoryItem[];
 }

@@ -798,18 +798,37 @@ components:
         prompt:
           type: string
           minLength: 3
+          maxLength: 12000
         courseId:
           type: [integer, "null"]
+        history:
+          type: array
+          maxItems: 12
+          items:
+            type: object
+            required: [role, content]
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
+                minLength: 1
+                maxLength: 24000
     StudyAssistantResponse:
       type: object
       required: [answer, suggestedTitle, suggestedCards]
       properties:
         answer:
           type: string
+          minLength: 1
         suggestedTitle:
           type: string
+          minLength: 1
+          maxLength: 140
         suggestedCards:
           type: array
+          maxItems: 12
           items:
             $ref: "#/components/schemas/FlashcardDraft"
     CommunityMessage:

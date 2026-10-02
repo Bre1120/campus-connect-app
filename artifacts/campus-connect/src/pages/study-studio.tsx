@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useQueryClient } from '@tanstack/react-query';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -160,29 +161,63 @@ function AssistantView({ onNavigate, courses }: { onNavigate: (v: any) => void; 
   const [prompt, setPrompt] = useState('');
   const [courseId, setCourseId] = useState('');
   const [result, setResult] = useState<{ answer: string; suggestedTitle: string; suggestedCards: FlashcardDraft[] } | null>(null);
+  const [conversation, setConversation] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [resultCourseId, setResultCourseId] = useState<number | null>(null);
+  const [deckSaved, setDeckSaved] = useState(false);
+  const answerRef = useRef<HTMLDivElement>(null);
+  const validPrompt = prompt.trim().length >= 3 && prompt.length <= 12000;
+
+  useEffect(() => {
+    if (result) answerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [result]);
+
+  const clearConversation = () => {
+    setConversation([]);
+    setResult(null);
+    setPrompt('');
+    setDeckSaved(false);
+    ask.reset();
+    createDeck.reset();
+  };
+
+  const errorData = ask.error?.data as { error?: string } | undefined;
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
-    ask.mutate({ data: { prompt, courseId: courseId ? Number(courseId) : null } }, {
-      onSuccess: (data) => setResult(data)
+    if (!validPrompt || ask.isPending || createDeck.isPending) return;
+    const question = prompt.trim();
+    const selectedCourse = courseId ? Number(courseId) : null;
+    // Keep the original notes/question plus the most recent follow-ups.
+    const history = conversation.length > 12
+      ? [...conversation.slice(0, 2), ...conversation.slice(-10)]
+      : conversation;
+    setResult(null);
+    setDeckSaved(false);
+    createDeck.reset();
+    ask.mutate({ data: { prompt: question, courseId: selectedCourse, history } }, {
+      onSuccess: (data) => {
+        setResult(data);
+        setResultCourseId(selectedCourse);
+        setConversation(previous => [...previous, { role: 'user', content: question }, { role: 'assistant', content: data.answer }]);
+        setPrompt('');
+      },
     });
   };
 
   const handleSaveDeck = () => {
-    if (!result) return;
+    if (!result?.suggestedCards.length || createDeck.isPending || ask.isPending || deckSaved) return;
     createDeck.mutate({
       data: {
         title: result.suggestedTitle,
         description: `Generated from AI Assistant on ${format(new Date(), 'MMM d, yyyy')}`,
-        courseId: courseId ? Number(courseId) : null,
+        courseId: resultCourseId,
         cards: result.suggestedCards
       }
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListFlashcardDecksQueryKey() });
+        setDeckSaved(true);
         toast({ title: 'Deck saved', description: 'Find it in your Study Studio dashboard.' });
-        onNavigate('dashboard');
       }
     });
   };
@@ -194,6 +229,7 @@ function AssistantView({ onNavigate, courses }: { onNavigate: (v: any) => void; 
           <ChevronLeft size={20} />
         </button>
         <span className="text-sm font-semibold uppercase tracking-[.14em] text-muted-foreground">AI Study Assistant</span>
+        {conversation.length > 0 && <button type="button" onClick={clearConversation} disabled={ask.isPending || createDeck.isPending} className="ml-auto rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-50" data-testid="button-new-ai-conversation">New conversation</button>}
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
@@ -202,26 +238,40 @@ function AssistantView({ onNavigate, courses }: { onNavigate: (v: any) => void; 
             <Sparkles size={24} />
           </div>
           <div>
-            <h2 className="cc-display text-2xl font-semibold">Ask anything</h2>
-            <p className="text-sm text-muted-foreground">Paste your notes, ask a concept, and get an explanation along with tailored flashcards.</p>
+            <h2 className="cc-display text-2xl font-semibold">{conversation.length ? 'Keep learning' : 'What are you studying?'}</h2>
+            <p className="text-sm text-muted-foreground">Paste notes, explore a concept, or ask for a practice quiz. Follow-up questions use this conversation’s context.</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!conversation.length && <div className="flex flex-wrap gap-2">
+            {['Explain a concept with an example', 'Turn my notes into flashcards', 'Help me plan around my deadlines'].map(example => <button key={example} type="button" disabled={ask.isPending} onClick={() => setPrompt(example === 'Explain a concept with an example' ? 'Explain [your topic] simply, with a worked example.' : example === 'Turn my notes into flashcards' ? 'Make flashcards from these notes:\n\n[paste your notes here]' : 'Help me build a realistic study plan around my upcoming deadlines. Ask me how much time I have if needed.')} className="rounded-full border border-border px-3 py-2 text-xs font-semibold hover:border-primary">{example}</button>)}
+          </div>}
+          <label htmlFor="ai-study-prompt" className="block text-sm font-semibold">{conversation.length ? 'Your follow-up question' : 'Your question or notes'}</label>
           <textarea
+            id="ai-study-prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Explain the process of cellular respiration in simple terms..."
             className="field min-h-32 resize-y bg-background"
-            disabled={ask.isPending}
+            disabled={ask.isPending || createDeck.isPending}
+            maxLength={12000}
+            minLength={3}
+            required
             data-testid="input-ai-prompt"
           />
+          <p className="text-xs text-muted-foreground">{prompt.length.toLocaleString()} / 12,000 characters · AI can make mistakes—check important details against your course materials.</p>
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <select
               value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
+              onChange={(e) => {
+                if (conversation.length && !window.confirm('Changing course starts a new conversation. Continue?')) return;
+                setCourseId(e.target.value);
+                if (conversation.length) clearConversation();
+              }}
+              aria-label="Course context"
               className="field w-full sm:w-64"
-              disabled={ask.isPending}
+              disabled={ask.isPending || createDeck.isPending}
               data-testid="select-ai-course"
             >
               <option value="">No specific course</option>
@@ -229,37 +279,41 @@ function AssistantView({ onNavigate, courses }: { onNavigate: (v: any) => void; 
                 <option key={c.id} value={c.id}>{c.code} · {c.name}</option>
               ))}
             </select>
-            <AppButton type="submit" disabled={!prompt.trim() || ask.isPending} data-testid="button-ai-submit">
+            <AppButton type="submit" disabled={!validPrompt || ask.isPending || createDeck.isPending} data-testid="button-ai-submit">
               {ask.isPending ? 'Thinking...' : 'Ask Assistant'}
             </AppButton>
           </div>
         </form>
         {ask.isError ? (
           <div className="mt-4 rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert">
-            The assistant could not respond. Check your connection and try again.
+            {errorData?.error || 'Could not reach the assistant. Your question is still here—check your connection and try again.'}
           </div>
         ) : null}
       </div>
+      {ask.isPending && <p role="status" aria-live="polite" className="rounded-xl bg-secondary/30 p-4 text-sm text-secondary-foreground">Working on your question and study material…</p>}
 
-      {result && (
-        <div className="space-y-6 cc-stagger">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-            <h3 className="cc-display mb-4 text-xl font-semibold">Explanation</h3>
-            <div className="prose prose-sm prose-slate max-w-none dark:prose-invert">
-              {result.answer.split('\n').map((p, i) => <p key={i}>{p}</p>)}
-            </div>
+      {conversation.length > 0 && <div ref={answerRef} className="scroll-mt-24 space-y-4" aria-live="polite" data-testid="ai-conversation">
+        {conversation.map((message, index) => <div key={index} className={`min-w-0 rounded-2xl border border-border p-5 sm:p-6 ${message.role === 'user' ? 'bg-secondary/20' : 'bg-card shadow-sm'}`}>
+          <h3 className="mb-3 text-sm font-bold text-primary">{message.role === 'user' ? 'You' : 'Study Assistant'}</h3>
+          <div className="prose prose-sm max-w-none break-words dark:prose-invert [&_pre]:max-w-full [&_pre]:overflow-x-auto">
+            <ReactMarkdown components={{ a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a> }}>{message.content}</ReactMarkdown>
           </div>
+        </div>)}
+      </div>}
 
+      {result && result.suggestedCards.length > 0 && (
+        <div className="space-y-6 cc-stagger">
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h3 className="cc-display text-xl font-semibold">Suggested Flashcards</h3>
+                <h3 className="cc-display text-xl font-semibold">{result.suggestedTitle}</h3>
                 <p className="text-sm text-muted-foreground">We generated {result.suggestedCards.length} cards based on the answer.</p>
               </div>
-              <AppButton onClick={handleSaveDeck} disabled={createDeck.isPending} data-testid="button-save-ai-deck">
-                {createDeck.isPending ? 'Saving...' : 'Save as Deck'}
+              <AppButton onClick={handleSaveDeck} disabled={createDeck.isPending || deckSaved || ask.isPending} data-testid="button-save-ai-deck">
+                {createDeck.isPending ? 'Saving...' : deckSaved ? 'Deck saved' : 'Save as Deck'}
               </AppButton>
             </div>
+            {createDeck.isError && <p role="alert" className="mb-4 text-sm text-destructive">Could not save your deck. Your cards are still here—please try again.</p>}
             
             <div className="grid gap-4 sm:grid-cols-2">
               {result.suggestedCards.map((card, i) => (

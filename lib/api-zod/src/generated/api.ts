@@ -467,25 +467,39 @@ export const UpdateFlashcardConfidenceResponse = zod.object({
  * @summary Ask the personalized AI study assistant
  */
 export const askStudyAssistantBodyPromptMin = 3;
+export const askStudyAssistantBodyPromptMax = 12000;
+
+export const askStudyAssistantBodyHistoryItemContentMax = 24000;
+
+export const askStudyAssistantBodyHistoryMax = 12;
 
 
 
 export const AskStudyAssistantBody = zod.object({
-  "prompt": zod.string().min(askStudyAssistantBodyPromptMin),
-  "courseId": zod.int().nullish()
+  "prompt": zod.string().min(askStudyAssistantBodyPromptMin).max(askStudyAssistantBodyPromptMax),
+  "courseId": zod.int().nullish(),
+  "history": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string().min(1).max(askStudyAssistantBodyHistoryItemContentMax)
+})).max(askStudyAssistantBodyHistoryMax).optional()
 })
 
 
+export const askStudyAssistantResponseSuggestedTitleMax = 140;
+
+
+
+export const askStudyAssistantResponseSuggestedCardsMax = 12;
 
 
 
 export const AskStudyAssistantResponse = zod.object({
-  "answer": zod.string(),
-  "suggestedTitle": zod.string(),
+  "answer": zod.string().min(1),
+  "suggestedTitle": zod.string().min(1).max(askStudyAssistantResponseSuggestedTitleMax),
   "suggestedCards": zod.array(zod.object({
   "front": zod.string().min(1),
   "back": zod.string().min(1)
-}))
+})).max(askStudyAssistantResponseSuggestedCardsMax)
 })
 
 
