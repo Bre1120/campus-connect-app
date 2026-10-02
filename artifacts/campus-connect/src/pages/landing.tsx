@@ -160,21 +160,14 @@ export function LandingPage() {
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
             <div className="mb-16 text-center">
               <h2 className="cc-display text-4xl font-semibold sm:text-5xl">What students are saying</h2>
-              <p className="mt-4 text-sidebar-foreground/60">10 responses to “What did you like most about the app?”</p>
+              <p className="mt-4 text-sidebar-foreground/60">Selected responses to “What did you like most about the app?”</p>
             </div>
             
             <div className="grid gap-6 md:grid-cols-3">
               {[
                 "How effective it has been to help me study",
-                "I despise working with different apps than the ones I’m use to , I love that this one was easy",
-                "Very easy to access and go around in",
-                "The details",
                 "It was very easy to navigate.",
                 "I like it sets a plan to make flash cards for you so you can study",
-                "Everything",
-                "How easy to use it is",
-                "Very simple to use",
-                "Study Studio",
               ].map((quote, i) => (
                 <figure key={i} className="m-0 flex min-w-0 flex-col justify-between rounded-3xl bg-sidebar-accent p-8" data-testid={`student-feedback-${i + 1}`}>
                   <div>
