@@ -16,6 +16,7 @@ import {
 import {
   getGetDashboardQueryKey, getGetTaskQueryKey, getListCoursesQueryKey, getListTasksQueryKey,
   getGetPreferencesQueryKey, getGetProfileQueryKey,
+  listCourses,
   useCreateCourse, useCreateTask, useDeleteCourse, useDeleteTask, useGetDashboard, useGetTask,
   useGetPreferences, useGetProfile,
   useListCourses, useListTasks, useToggleTaskCompletion, useUpdateCourse, useUpdateTask,
@@ -29,6 +30,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getDaypartGreeting } from '@/lib/greeting';
+import { normalizeTaskCourseCode, presetCourseValue, taskCourseChoices, taskCoursePresets } from '@/lib/task-course-choices';
 import { StudyStudioPage } from '@/pages/study-studio';
 import { CommunityPage } from '@/pages/community';
 import { LandingPage } from '@/pages/landing';
@@ -123,33 +125,62 @@ function EmptyState({ title, description, action }: { title: string; description
   </div>;
 }
 
-function TaskDialog({ open, onOpenChange, editingTask, courses, initialDate }: { open: boolean; onOpenChange: (open: boolean) => void; editingTask: Task | null; courses: Course[]; initialDate?: string }) {
+function TaskDialog({ open, onOpenChange, editingTask, courses, initialDate, includeCoursePresets = false }: { open: boolean; onOpenChange: (open: boolean) => void; editingTask: Task | null; courses: Course[]; initialDate?: string; includeCoursePresets?: boolean }) {
   const { toast } = useToast();
   const client = useQueryClient();
   const fetched = useGetTask(editingTask?.id ?? 0, { query: { enabled: !!editingTask, queryKey: getGetTaskQueryKey(editingTask?.id ?? 0) } });
   const create = useCreateTask();
   const update = useUpdateTask();
+  const createCourse = useCreateCourse();
+  const initialized = useRef(false);
+  const choices = includeCoursePresets && !editingTask
+    ? taskCourseChoices(courses)
+    : courses.map(course => ({ value: String(course.id), code: course.code, name: course.name }));
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: { title: '', courseId: '', type: 'assignment', dueDate: initialDate ?? format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' },
   });
   useEffect(() => {
+    if (!open) { initialized.current = false; return; }
     const task = fetched.data ?? editingTask;
     if (open && task) form.reset({ title: task.title, courseId: String(task.courseId), type: task.type, dueDate: task.dueDate, dueTime: task.dueTime ?? '', priority: task.priority, notes: task.notes ?? '' });
-    if (open && !editingTask) form.reset({ title: '', courseId: courses[0] ? String(courses[0].id) : '', type: 'assignment', dueDate: initialDate ?? format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' });
-  }, [open, editingTask, fetched.data, courses, form, initialDate]);
-  const submit = (values: TaskFormValues) => {
-    const data: TaskInput = { title: values.title, courseId: Number(values.courseId), type: values.type as TaskType, dueDate: values.dueDate, dueTime: values.dueTime || null, priority: values.priority, notes: values.notes || null };
+    if (!editingTask && !initialized.current) {
+      const first = includeCoursePresets ? taskCourseChoices(courses)[0]?.value : courses[0] ? String(courses[0].id) : '';
+      form.reset({ title: '', courseId: first ?? '', type: 'assignment', dueDate: initialDate ?? format(new Date(), 'yyyy-MM-dd'), dueTime: '', priority: 'medium', notes: '' });
+    }
+    initialized.current = true;
+  }, [open, editingTask, fetched.data, courses, form, initialDate, includeCoursePresets]);
+  const submit = async (values: TaskFormValues) => {
+    try {
+    let courseId = Number(values.courseId);
+    const preset = includeCoursePresets && !editingTask
+      ? taskCoursePresets.find(course => presetCourseValue(course.code) === values.courseId)
+      : undefined;
+    if (preset) {
+      const latest = await listCourses();
+      const existing = latest.find(course => normalizeTaskCourseCode(course.code) === normalizeTaskCourseCode(preset.code));
+      const course = existing ?? await createCourse.mutateAsync({ data: { ...preset } });
+      courseId = course.id;
+      form.setValue('courseId', String(course.id));
+      client.setQueryData(getListCoursesQueryKey(), existing ? latest : [...latest, course]);
+      void client.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+    }
+    const data: TaskInput = { title: values.title, courseId, type: values.type as TaskType, dueDate: values.dueDate, dueTime: values.dueTime || null, priority: values.priority, notes: values.notes || null };
     const done = () => { client.invalidateQueries({ queryKey: getListTasksQueryKey() }); client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); onOpenChange(false); toast({ title: editingTask ? 'Task updated' : 'Task added', description: 'Your study plan is up to date.' }); };
-    if (editingTask) update.mutate({ id: editingTask.id, data }, { onSuccess: done });
-    else create.mutate({ data }, { onSuccess: done });
+    if (editingTask) await update.mutateAsync({ id: editingTask.id, data });
+    else await create.mutateAsync({ data });
+    done();
+    } catch (error) {
+      toast({ title: 'Task was not saved', description: error instanceof Error ? error.message : 'Please try again. Your entries are still here.', variant: 'destructive' });
+    }
   };
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="rounded-2xl border-card-border bg-card p-0 sm:max-w-[520px]">
+  const saving = form.formState.isSubmitting;
+  return <Dialog open={open} onOpenChange={next => { if (!saving) onOpenChange(next); }}><DialogContent className="rounded-2xl border-card-border bg-card p-0 sm:max-w-[520px]">
     <DialogHeader className="border-b border-border bg-secondary/35 px-6 py-5 text-left"><DialogTitle className="cc-display text-2xl">{editingTask ? 'Refine your task' : 'Add something to your plate'}</DialogTitle><DialogDescription>{editingTask ? 'Small updates keep your plan honest.' : 'Capture it now, then get back to your focus.'}</DialogDescription></DialogHeader>
     <Form {...form}><form onSubmit={form.handleSubmit(submit)} className="space-y-4 px-6 py-5">
       <FormField control={form.control} name="title" render={({ field }) => <FormItem><FormLabel>What needs doing?</FormLabel><FormControl><input autoFocus className="field" placeholder="e.g. Outline chapter three" {...field} data-testid="input-task-title" /></FormControl><FormMessage /></FormItem>} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField control={form.control} name="courseId" render={({ field }) => <FormItem><FormLabel>Course</FormLabel><FormControl><select className="field" {...field} data-testid="select-task-course"><option value="">Select a course</option>{courses.map(course => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}</select></FormControl><FormMessage /></FormItem>} />
+        <FormField control={form.control} name="courseId" render={({ field }) => <FormItem><FormLabel>Course</FormLabel><FormControl><select className="field" {...field} disabled={saving} data-testid="select-task-course"><option value="">Select a course</option>{choices.map(course => <option key={course.value} value={course.value}>{course.code} · {course.name}</option>)}</select></FormControl><FormMessage /></FormItem>} />
         <FormField control={form.control} name="type" render={({ field }) => <FormItem><FormLabel>Type</FormLabel><FormControl><select className="field" {...field} data-testid="select-task-type">{Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormControl></FormItem>} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -158,7 +189,7 @@ function TaskDialog({ open, onOpenChange, editingTask, courses, initialDate }: {
       </div>
       <FormField control={form.control} name="priority" render={({ field }) => <FormItem><FormLabel>Priority</FormLabel><FormControl><div className="grid grid-cols-3 gap-2">{(['low', 'medium', 'high'] as const).map(priority => <button type="button" key={priority} onClick={() => field.onChange(priority)} className={`rounded-xl border px-3 py-2.5 text-sm font-semibold capitalize ${field.value === priority ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`} data-testid={`button-priority-${priority}`}>{priority}</button>)}</div></FormControl></FormItem>} />
       <FormField control={form.control} name="notes" render={({ field }) => <FormItem><FormLabel>Notes <span className="font-normal text-muted-foreground">(optional)</span></FormLabel><FormControl><textarea className="field min-h-20 resize-y" placeholder="Anything that will help future-you..." {...field} data-testid="textarea-task-notes" /></FormControl></FormItem>} />
-      <DialogFooter className="gap-2 pt-2"><AppButton type="button" variant="quiet" onClick={() => onOpenChange(false)} data-testid="button-cancel-task">Cancel</AppButton><AppButton type="submit" disabled={create.isPending || update.isPending} data-testid="button-save-task">{create.isPending || update.isPending ? 'Saving...' : editingTask ? 'Save changes' : 'Add task'}</AppButton></DialogFooter>
+      <DialogFooter className="gap-2 pt-2"><AppButton type="button" variant="quiet" disabled={saving} onClick={() => onOpenChange(false)} data-testid="button-cancel-task">Cancel</AppButton><AppButton type="submit" disabled={saving} data-testid="button-save-task">{saving ? 'Saving...' : editingTask ? 'Save changes' : 'Add task'}</AppButton></DialogFooter>
     </form></Form>
   </DialogContent></Dialog>;
 }
@@ -292,7 +323,7 @@ function TasksPage() {
   return <div className="cc-page space-y-7"><section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-primary">The full picture</p><h1 className="cc-display mt-1 text-4xl font-semibold">All tasks</h1><p className="mt-2 text-sm text-muted-foreground">Keep every assignment, exam, and idea in view.</p></div><div className="flex flex-wrap gap-2"><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task"><Plus size={17} /> Add task</AppButton></div></section>
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-3 text-muted-foreground" size={17} /><input className="field pl-10" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks or courses..." data-testid="input-search-tasks" /></div><div className="flex gap-2 overflow-x-auto"><select className="field min-w-[118px]" value={status} onChange={e => setStatus(e.target.value as typeof status)} data-testid="select-task-status"><option value="all">All tasks</option><option value="active">Active</option><option value="completed">Completed</option></select><select className="field min-w-[124px]" value={type} onChange={e => setType(e.target.value)} data-testid="select-task-filter-type"><option value="all">Every type</option>{Object.entries(typeLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></div></div>
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">{tasks.isLoading ? <TaskSkeleton rows={7} /> : tasks.isError ? <EmptyState title="Couldn't load tasks" description="There was a hiccup bringing in your list." action={<AppButton variant="outline" onClick={() => tasks.refetch()} data-testid="button-retry-tasks">Try again</AppButton>} /> : filtered.length ? <div>{filtered.map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} />)}</div> : <EmptyState title={search ? 'No matches here.' : 'Your list is clear.'} description={search ? 'Try another phrase or clear the search.' : 'Add the next thing you want to make progress on.'} action={!search ? <AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-empty-task"><Plus size={16} /> Add a task</AppButton> : null} />}</div>
-    <TaskDialog open={dialog.open} onOpenChange={open => setDialog({ ...dialog, open })} editingTask={dialog.task} courses={courses.data ?? []} />
+    <TaskDialog open={dialog.open} onOpenChange={open => setDialog({ ...dialog, open })} editingTask={dialog.task} courses={courses.data ?? []} includeCoursePresets />
   </div>;
 }
 
