@@ -2,3 +2,4 @@
 - [Community trust boundaries](community-trust.md) — tutor/advisor labels are self-described until real verification exists; stored reports do not imply staffed moderation.
 - [Navigation preference](navigation-preference.md) — the user requested footer navigation rather than a sidebar for Campus Connect.
 - [Workspace package tools](workspace-package-tools.md) — the package callback cannot target pnpm leaf packages; preserve workspace-root protection.
+- [Managed study AI](managed-study-ai.md) — prefer managed OpenAI access; personal credentials previously failed a real assistant request.
