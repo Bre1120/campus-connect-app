@@ -10,8 +10,8 @@ import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } fr
 import { addDays, addMonths, subMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from 'date-fns';
 import {
   ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronRight,
-  ChevronLeft, Clock3, Flame, LayoutDashboard, ListTodo, LogOut, Menu,
-  Pencil, Plus, Search, Settings2, Sparkles, Trash2, UserRound, UsersRound, X,
+  ChevronLeft, Clock3, Flame, LayoutDashboard, ListTodo, LogOut,
+  Pencil, Plus, Search, Settings2, Sparkles, Trash2, UserRound, UsersRound,
 } from 'lucide-react';
 import {
   getGetDashboardQueryKey, getGetTaskQueryKey, getListCoursesQueryKey, getListTasksQueryKey,
@@ -27,6 +27,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { getDaypartGreeting } from '@/lib/greeting';
 import { StudyStudioPage } from '@/pages/study-studio';
 import { CommunityPage } from '@/pages/community';
 import { LandingPage } from '@/pages/landing';
@@ -162,26 +163,64 @@ function TaskDialog({ open, onOpenChange, editingTask, courses, initialDate }: {
 }
 
 function AppShell({ children }: { children: ReactNode }) {
-  const [location, setLocation] = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [location] = useLocation();
   const { user } = useUser();
   const { signOut } = useClerk();
   const nav = [
     { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
     { href: '/tasks', label: 'All tasks', icon: ListTodo },
     { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-    { href: '/study-studio', label: 'Flashcards & AI', icon: BookOpen },
+    { href: '/study-studio', label: 'Study', accessibleLabel: 'Flashcards & AI', icon: BookOpen },
     { href: '/community', label: 'Community', icon: UsersRound },
+    { href: '/profile', label: 'Profile', icon: UserRound },
+    { href: '/settings', label: 'Settings', icon: Settings2 },
   ];
   return <div className="cc-grain min-h-[100dvh] bg-background">
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col bg-sidebar px-5 py-6 text-sidebar-foreground transition-transform duration-300 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="mb-12 flex items-center justify-between"><Logo inverse /><button type="button" className="rounded-lg p-2 text-sidebar-foreground/60 md:hidden" onClick={() => setMobileOpen(false)} data-testid="button-close-menu"><X size={18} /></button></div>
-      <div className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-sidebar-foreground/40">Your workspace</div>
-      <nav className="space-y-1">{nav.map(item => { const Icon = item.icon; return <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${location === item.href ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`} data-testid={`link-nav-${item.label.toLowerCase().replace(' ', '-')}`}><Icon size={18} /><span>{item.label}</span>{location === item.href ? <ChevronRight size={15} className="ml-auto" /> : null}</Link>; })}</nav>
-      <div className="mt-auto space-y-1"><Link href="/profile" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${location === '/profile' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`} data-testid="link-nav-profile"><UserRound size={18} />Profile</Link><Link href="/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground" data-testid="link-nav-settings"><Settings2 size={18} />Settings</Link><button onClick={() => signOut({ redirectUrl: basePath || '/' })} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground" data-testid="button-sign-out"><LogOut size={18} />Sign out</button></div>
-    </aside>
-    {mobileOpen ? <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-sidebar/30 md:hidden" onClick={() => setMobileOpen(false)} data-testid="button-menu-backdrop" /> : null}
-    <main className="min-h-[100dvh] md:pl-[248px]"><header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/90 px-5 backdrop-blur-md sm:px-8"><button type="button" onClick={() => setMobileOpen(true)} className="rounded-xl p-2 text-muted-foreground hover:bg-muted md:hidden" data-testid="button-open-menu"><Menu size={20} /></button><div className="hidden md:block"><span className="text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">{format(new Date(), 'EEEE · MMM d')}</span></div><div className="ml-auto flex items-center gap-3"><button type="button" className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground" data-testid="button-notifications"><Bell size={18} /><span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" /></button><Link href="/profile" className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-muted" data-testid="link-header-profile"><span className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">{user?.firstName?.slice(0, 1) ?? 'S'}</span><span className="hidden text-sm font-semibold sm:block">{user?.firstName ?? 'Student'}</span></Link></div></header><div className="mx-auto max-w-[1320px] p-5 sm:p-8">{children}</div></main>
+    <main className="min-h-[100dvh]">
+      <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/90 px-5 backdrop-blur-md sm:px-8">
+        <Logo />
+        <div className="flex items-center gap-3 sm:gap-5">
+          <span className="hidden text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground sm:block">{format(new Date(), 'EEEE · MMM d')}</span>
+          <div className="flex items-center gap-2" data-testid="text-header-student">
+            <span className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">{user?.firstName?.slice(0, 1) ?? 'S'}</span>
+            <span className="text-sm font-semibold">{user?.firstName ?? 'Student'}</span>
+          </div>
+        </div>
+      </header>
+      <div className="mx-auto max-w-[1320px] px-5 pb-[calc(11rem+env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pt-8 lg:pb-[calc(8rem+env(safe-area-inset-bottom))]">{children}</div>
+    </main>
+    <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-sidebar-foreground/10 bg-sidebar/95 text-sidebar-foreground shadow-[0_-10px_30px_-20px_hsl(var(--foreground)/.45)] backdrop-blur-xl [padding-bottom:env(safe-area-inset-bottom)]">
+      <nav aria-label="Main navigation" className="mx-auto grid max-w-[1320px] grid-cols-4 gap-1 px-2 py-2 sm:grid-cols-4 sm:px-6 lg:grid-cols-8 lg:gap-2">
+        {nav.map(item => {
+          const Icon = item.icon;
+          const active = location === item.href || (item.href === '/dashboard' && location === '/');
+          return <Link key={item.href} href={item.href} aria-label={item.accessibleLabel ?? item.label} aria-current={active ? 'page' : undefined}
+            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-center text-[10px] font-semibold leading-tight sm:text-xs ${active ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}
+            data-testid={`link-nav-${item.href.slice(1)}`}>
+            <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+            <span className="max-w-full truncate">{item.label}</span>
+          </Link>;
+        })}
+        <button type="button" onClick={() => signOut({ redirectUrl: basePath || '/' })} aria-label="Sign out"
+          className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-center text-[10px] font-semibold leading-tight text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground sm:text-xs"
+          data-testid="button-sign-out">
+          <LogOut size={18} />
+          <span className="max-w-full truncate">Sign out</span>
+        </button>
+      </nav>
+      <div className="border-t border-sidebar-foreground/10 px-4 py-2 text-center">
+        <a
+          href="https://docs.google.com/forms/d/e/1FAIpQLSd9gYj6njHFB9V1_EN0djNRcLPjx865jcvqEP8M1owrl89r9Q/viewform?usp=header"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Feedback survey (opens in a new tab)"
+          className="inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-semibold text-sidebar-foreground/75 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          data-testid="link-feedback-survey"
+        >
+          Feedback survey <ArrowRight size={13} className="-rotate-45" />
+        </a>
+      </div>
+    </footer>
   </div>;
 }
 
@@ -194,6 +233,22 @@ function DashboardPage() {
   const toggle = useToggleTaskCompletion();
   const del = useDeleteTask();
   const { user } = useUser();
+  const [greeting, setGreeting] = useState(() => getDaypartGreeting(new Date().getHours()));
+
+  useEffect(() => {
+    const refreshGreeting = () => setGreeting(getDaypartGreeting(new Date().getHours()));
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') refreshGreeting();
+    };
+    const interval = window.setInterval(refreshGreeting, 60_000);
+    window.addEventListener('focus', refreshGreeting);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshGreeting);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, []);
   
   const toggleTask = (task: Task) => toggle.mutate({ id: task.id, data: { completed: !task.completed } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); client.invalidateQueries({ queryKey: getListTasksQueryKey() }); } });
   const deleteTask = (task: Task) => { if (window.confirm(`Remove "${task.title}" from your plan?`)) del.mutate({ id: task.id }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); client.invalidateQueries({ queryKey: getListTasksQueryKey() }); toast({ title: 'Task removed' }); } }); };
@@ -201,9 +256,9 @@ function DashboardPage() {
   const upcoming = data?.upcomingTasks ?? [];
   
   return <div className="cc-page space-y-8 pb-12">
-    <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-semibold text-primary">A clear day starts here.</p><h1 className="cc-display text-4xl font-semibold leading-[.95] sm:text-5xl">Good morning, <span className="text-primary">{user?.firstName ?? 'student'}</span>.</h1><p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">One thoughtful next step is enough. Here’s what deserves your attention today.</p></div><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></section>
+    <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-semibold text-primary">A clear day starts here.</p><h1 className="cc-display text-4xl font-semibold leading-[.95] sm:text-5xl"><span data-testid="text-dashboard-greeting">{greeting}</span>, <span className="text-primary">{user?.firstName ?? 'student'}</span>.</h1><p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">One thoughtful next step is enough. Here’s what deserves your attention today.</p></div><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></section>
     {isError ? <div className="flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm"><span>We couldn't load your study plan.</span><AppButton variant="outline" onClick={() => refetch()} data-testid="button-retry-dashboard">Try again</AppButton></div> : null}
-    <section className="grid gap-5 lg:grid-cols-[1.35fr_.65fr]">
+    <section className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,.65fr)]">
       <div className="rounded-2xl bg-sidebar p-6 text-sidebar-foreground shadow-lg sm:p-8"><div className="flex items-start justify-between"><div><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><Flame size={16} /> This week</div><h2 className="cc-display text-3xl font-semibold">Keep your rhythm.</h2><p className="mt-2 max-w-sm text-sm leading-6 text-sidebar-foreground/60">Small, consistent wins are what move a semester forward.</p></div><div className="grid size-16 place-items-center rounded-full border-[6px] border-primary/25 border-t-primary text-lg font-bold text-primary">{data?.completion.percentage ?? 0}%</div></div><div className="mt-7 grid grid-cols-7 gap-2">{(data?.completion.days ?? []).slice(0, 7).map((day, i) => <div key={day.date} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent p-1"><div className="flex h-full items-end"><div className="w-full rounded-full bg-primary" style={{ height: `${day.total ? Math.max(10, (day.completed / day.total) * 100) : 8}%` }} /></div></div><span className="text-[10px] font-semibold uppercase text-sidebar-foreground/45">{format(parseISO(day.date), 'EEEEE')}</span></div>)}{!data?.completion.days?.length ? Array.from({ length: 7 }).map((_, i) => <div key={i} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent" /><span className="text-[10px] text-sidebar-foreground/45">—</span></div>) : null}</div><div className="mt-5 flex items-center justify-between text-xs text-sidebar-foreground/55"><span>{data?.completion.completed ?? 0} completed</span><span>{data?.completion.total ?? 0} planned this week</span></div></div>
       <div className="flex flex-col gap-5">
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">A gentle nudge</p><h2 className="cc-display mt-2 text-2xl font-semibold">You’ve got this.</h2></div><span className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary"><Check size={19} /></span></div><p className="mt-4 text-sm leading-6 text-muted-foreground">Start with the task that takes less than 20 minutes. Momentum usually follows.</p><Link href="/tasks" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:gap-3" data-testid="link-view-plan">View your plan <ArrowRight size={16} /></Link></div>
@@ -211,7 +266,7 @@ function DashboardPage() {
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1 bg-gradient-to-br from-card to-[#23746a]/10 border-[#23746a]/30"><div className="flex items-start justify-between"><div><h2 className="cc-display mt-1 text-2xl font-semibold">Community</h2></div><span className="grid size-10 place-items-center rounded-xl bg-[#23746a] text-primary-foreground"><UsersRound size={19} /></span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">Connect with peers, tutors, and advisors.</p><Link href="/community" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#23746a] hover:gap-3" data-testid="link-open-community">Join conversation <ArrowRight size={16} /></Link></div>
       </div>
     </section>
-    <section className="grid gap-8 xl:grid-cols-[1.15fr_.85fr]">
+    <section className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Today</p><h2 className="cc-display mt-1 text-2xl font-semibold">{isToday(new Date()) ? 'Your focus list' : 'Your tasks'}</h2></div><Link href="/tasks" className="text-xs font-bold text-primary hover:underline" data-testid="link-all-tasks">See all</Link></div>{isLoading ? <TaskSkeleton /> : today.length ? <div>{today.map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} />)}</div> : <EmptyState title="A blank page, for now." description="Nothing is due today. Use the breathing room to get ahead." action={<AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-first-task"><Plus size={16} /> Add a task</AppButton>} />}</div>
       <div><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Coming up</p><h2 className="cc-display mt-1 text-2xl font-semibold">Next deadlines</h2></div><Link href="/calendar" className="text-xs font-bold text-primary hover:underline" data-testid="link-calendar">Open calendar</Link></div><div className="rounded-2xl border border-border bg-card p-5 shadow-sm">{isLoading ? <TaskSkeleton rows={3} /> : upcoming.length ? upcoming.slice(0, 4).map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} compact />) : <EmptyState title="No deadlines ahead" description="Your future self is feeling very organized." />}</div></div>
     </section>

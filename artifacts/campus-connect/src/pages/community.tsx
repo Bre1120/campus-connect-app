@@ -39,7 +39,7 @@ export function CommunityPage() {
   const [room, setRoom] = useState<CommunityMessageRoom>('students');
   
   return (
-    <div className="cc-page flex h-[calc(100dvh-120px)] sm:h-[calc(100dvh-140px)] flex-col space-y-4 pb-2">
+    <div className="cc-page flex h-[calc(100dvh-280px)] min-h-[360px] flex-col space-y-4 pb-2 lg:h-[calc(100dvh-240px)]">
        <div className="flex items-end justify-between shrink-0">
          <div>
            <p className="mb-2 text-sm font-semibold text-primary">Join the discussion</p>

@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;
+:root {
+  --button-outline: rgba(0, 0, 0, 0.1);
+  --badge-outline: rgba(0, 0, 0, 0.05);
+
+  --opaque-button-border-intensity: -8;
+  --elevate-1: rgba(0, 0, 0, 0.03);
+  --elevate-2: rgba(0, 0, 0, 0.08);
+
+  --background: 40 30% 97%;
+  --foreground: 220 25% 15%;
+  --border: 36 20% 87%;
+  --card: 40 40% 99%;
+  --card-foreground: 220 25% 15%;
+  --card-border: 36 20% 87%;
+  
+  /* Deep Navy Sidebar */
+  --sidebar: 225 30% 16%;
+  --sidebar-foreground: 40 30% 97%;
+  --sidebar-border: 225 25% 22%;
+  --sidebar-primary: 25 85% 58%;
+  --sidebar-primary-foreground: 40 30% 97%;
+  --sidebar-accent: 225 25% 22%;
+  --sidebar-accent-foreground: 40 30% 97%;
+  --sidebar-ring: 25 85% 58%;
+  
+  --popover: 40 40% 99%;
+  --popover-foreground: 220 25% 15%;
+  --popover-border: 36 20% 87%;
+  
+  /* Warm Amber/Orange */
+  --primary: 25 85% 55%;
+  --primary-foreground: 40 30% 97%;
+  
+  /* Soft Teal */
+  --secondary: 175 35% 85%;
+  --secondary-foreground: 175 45% 20%;
+  
+  --muted: 38 25% 91%;
+  --muted-foreground: 220 15% 45%;
+  --accent: 40 40% 90%;
+  --accent-foreground: 220 25% 15%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 40 30% 97%;
+  --input: 36 20% 87%;
+  --ring: 25 85% 55%;
+  
+  --chart-1: 25 85% 55%;
+  --chart-2: 175 40% 45%;
+  --chart-3: 225 45% 55%;
+  --chart-4: 0 70% 55%;
+  --chart-5: 45 80% 50%;
+  
+  --app-font-sans: 'Plus Jakarta Sans', sans-serif;
+  --app-font-serif: 'Playfair Display', serif;
+  --app-font-mono: 'Plus Jakarta Sans', monospace;
+  
+  --radius: 0.9rem;
+  --shadow-2xs: 0 1px 2px 0 hsl(220 25% 15% / 0.04);
+  --shadow-xs: 0 2px 5px -2px hsl(220 25% 15% / 0.08);
+  --shadow-sm:
+    0 4px 10px -4px hsl(220 25% 15% / 0.14),
+    0 2px 4px -2px hsl(220 25% 15% / 0.08);
+  --shadow:
+    0 8px 18px -8px hsl(220 25% 15% / 0.18),
+    0 3px 6px -3px hsl(220 25% 15% / 0.1);
+  --shadow-md:
+    0 14px 28px -12px hsl(220 25% 15% / 0.2);
+  --shadow-lg:
+    0 22px 42px -18px hsl(220 25% 15% / 0.22);
+  --shadow-xl:
+    0px 2px 0px 0px hsl(202 89% 53% / 0),
+    0px 8px 10px -1px hsl(202 89% 53% / 0);
+  --shadow-2xl: 0 28px 52px -20px hsl(220 25% 15% / 0.24);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+
+  --sidebar-primary-border: hsl(
+    from hsl(var(--sidebar-primary)) h s
+      calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
+  --sidebar-accent-border: hsl(
+    from hsl(var(--sidebar-accent)) h s
+      calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
+  --primary-border: hsl(
+    from hsl(var(--primary)) h s
+      calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
+  --secondary-border: hsl(
+    from hsl(var(--secondary)) h s
+      calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
+  --muted-border: hsl(
+    from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) /
+      alpha
+  );
+  --accent-border: hsl(
+    from hsl(var(--accent)) h s
+      calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
+  --destructive-border: hsl(
+    from hsl(var(--destructive)) h s
+      calc(l + var(--opaque-button-border-intensity)) / alpha
+  );
+}
+.dark {
+  --button-outline: rgba(255, 255, 255, 0.1);
+  --badge-outline: rgba(255, 255, 255, 0.05);
+
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255, 255, 255, 0.04);
+  --elevate-2: rgba(255, 255, 255, 0.09);
+
+  --background: 220 25% 12%;
+  --foreground: 40 30% 97%;
+  --border: 220 20% 20%;
+  --card: 220 25% 14%;
+  --card-foreground: 40 30% 97%;
+  --card-border: 220 20% 20%;
+  --sidebar: 225 30% 8%;
+  --sidebar-foreground: 40 30% 97%;
+  --sidebar-border: 225 25% 15%;
+  --sidebar-primary: 25 85% 55%;
+  --sidebar-primary-foreground: 40 30% 97%;
+  --sidebar-accent: 225 25% 15%;
+  --sidebar-accent-foreground: 40 30% 97%;
+  --sidebar-ring: 25 85% 55%;
+  --popover: 220 25% 14%;
+  --popover-foreground: 40 30% 97%;
+  --popover-border: 220 20% 20%;
+  --primary: 25 85% 55%;
+  --primary-foreground: 40 30% 97%;
+  --secondary: 175 35% 25%;
+  --secondary-foreground: 175 45% 85%;
+  --muted: 220 20% 18%;
+  --muted-foreground: 220 15% 65%;
+  --accent: 175 35% 30%;
+  --accent-foreground: 175 45% 85%;
+  --destructive: 0 70% 60%;
+  --destructive-foreground: 40 30% 97%;
+  --input: 220 20% 20%;
+  --ring: 25 85% 55%;
+  --chart-1: 25 85% 55%;
+  --chart-2: 175 40% 55%;
+  --chart-3: 225 50% 65%;
+  --chart-4: 0 70% 60%;
+  --chart-5: 45 80% 55%;
+
+  --shadow-2xs: 0px 2px 0px 0px hsl(202 89% 53% / 0);
+  --shadow-xs: 0px 2px 0px 0px hsl(202 89% 53% / 0);
+  --shadow-sm:
+    0px 2px 0px 0px hsl(202 89% 53% / 0),
+    0px 1px 2px -1px hsl(202 89% 53% / 0);
+  --shadow:
+    0px 2px 0px 0px hsl(202 89% 53% / 0),
+    0px 1px 2px -1px hsl(202 89% 53% / 0);
+  --shadow-md:
+    0px 2px 0px 0px hsl(202 89% 53% / 0),
+    0px 2px 4px -1px hsl(202 89% 53% / 0);
+  --shadow-lg:
+    0px 2px 0px 0px hsl(202 89% 53% / 0),
+    0px 4px 6px -1px hsl(202 89% 53% / 0);
+  --shadow-xl:
+    0px 2px 0px 0px hsl(202 89% 53% / 0),
+    0px 8px 10px -1px hsl(202 89% 53% / 0);
+  --shadow-2xl: 0px 2px 0px 0px hsl(202 89% 53% / 0);
+}
+.cc-display { font-family: var(--app-font-serif); letter-spacing: -0.015em; }
