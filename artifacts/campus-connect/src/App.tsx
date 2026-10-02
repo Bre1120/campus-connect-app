@@ -23,6 +23,7 @@ import {
   type Course, type Task, type TaskInput, type TaskType,
 } from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { AgendaImportButton } from '@/components/agenda-import';
 import { Toaster } from '@/components/ui/toaster';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -256,7 +257,7 @@ function DashboardPage() {
   const upcoming = data?.upcomingTasks ?? [];
   
   return <div className="cc-page space-y-8 pb-12">
-    <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-semibold text-primary">A clear day starts here.</p><h1 className="cc-display text-4xl font-semibold leading-[.95] sm:text-5xl"><span data-testid="text-dashboard-greeting">{greeting}</span>, <span className="text-primary">{user?.firstName ?? 'student'}</span>.</h1><p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">One thoughtful next step is enough. Here’s what deserves your attention today.</p></div><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></section>
+    <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-semibold text-primary">A clear day starts here.</p><h1 className="cc-display text-4xl font-semibold leading-[.95] sm:text-5xl"><span data-testid="text-dashboard-greeting">{greeting}</span>, <span className="text-primary">{user?.firstName ?? 'student'}</span>.</h1><p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">One thoughtful next step is enough. Here’s what deserves your attention today.</p></div><div className="flex flex-wrap gap-2"><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></div></section>
     {isError ? <div className="flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm"><span>We couldn't load your study plan.</span><AppButton variant="outline" onClick={() => refetch()} data-testid="button-retry-dashboard">Try again</AppButton></div> : null}
     <section className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,.65fr)]">
       <div className="rounded-2xl bg-sidebar p-6 text-sidebar-foreground shadow-lg sm:p-8"><div className="flex items-start justify-between"><div><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><Flame size={16} /> This week</div><h2 className="cc-display text-3xl font-semibold">Keep your rhythm.</h2><p className="mt-2 max-w-sm text-sm leading-6 text-sidebar-foreground/60">Small, consistent wins are what move a semester forward.</p></div><div className="grid size-16 place-items-center rounded-full border-[6px] border-primary/25 border-t-primary text-lg font-bold text-primary">{data?.completion.percentage ?? 0}%</div></div><div className="mt-7 grid grid-cols-7 gap-2">{(data?.completion.days ?? []).slice(0, 7).map((day, i) => <div key={day.date} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent p-1"><div className="flex h-full items-end"><div className="w-full rounded-full bg-primary" style={{ height: `${day.total ? Math.max(10, (day.completed / day.total) * 100) : 8}%` }} /></div></div><span className="text-[10px] font-semibold uppercase text-sidebar-foreground/45">{format(parseISO(day.date), 'EEEEE')}</span></div>)}{!data?.completion.days?.length ? Array.from({ length: 7 }).map((_, i) => <div key={i} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent" /><span className="text-[10px] text-sidebar-foreground/45">—</span></div>) : null}</div><div className="mt-5 flex items-center justify-between text-xs text-sidebar-foreground/55"><span>{data?.completion.completed ?? 0} completed</span><span>{data?.completion.total ?? 0} planned this week</span></div></div>
@@ -288,7 +289,7 @@ function TasksPage() {
   const filtered = useMemo(() => (tasks.data ?? []).filter(task => `${task.title} ${task.courseName} ${task.courseCode}`.toLowerCase().includes(search.toLowerCase())), [tasks.data, search]);
   const toggleTask = (task: Task) => toggle.mutate({ id: task.id, data: { completed: !task.completed } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getListTasksQueryKey() }); client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); } });
   const deleteTask = (task: Task) => { if (window.confirm(`Remove "${task.title}" from your plan?`)) del.mutate({ id: task.id }, { onSuccess: () => { client.invalidateQueries({ queryKey: getListTasksQueryKey() }); client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); toast({ title: 'Task removed' }); } }); };
-  return <div className="cc-page space-y-7"><section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-primary">The full picture</p><h1 className="cc-display mt-1 text-4xl font-semibold">All tasks</h1><p className="mt-2 text-sm text-muted-foreground">Keep every assignment, exam, and idea in view.</p></div><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task"><Plus size={17} /> Add task</AppButton></section>
+  return <div className="cc-page space-y-7"><section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-primary">The full picture</p><h1 className="cc-display mt-1 text-4xl font-semibold">All tasks</h1><p className="mt-2 text-sm text-muted-foreground">Keep every assignment, exam, and idea in view.</p></div><div className="flex flex-wrap gap-2"><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task"><Plus size={17} /> Add task</AppButton></div></section>
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-3 text-muted-foreground" size={17} /><input className="field pl-10" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks or courses..." data-testid="input-search-tasks" /></div><div className="flex gap-2 overflow-x-auto"><select className="field min-w-[118px]" value={status} onChange={e => setStatus(e.target.value as typeof status)} data-testid="select-task-status"><option value="all">All tasks</option><option value="active">Active</option><option value="completed">Completed</option></select><select className="field min-w-[124px]" value={type} onChange={e => setType(e.target.value)} data-testid="select-task-filter-type"><option value="all">Every type</option>{Object.entries(typeLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></div></div>
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">{tasks.isLoading ? <TaskSkeleton rows={7} /> : tasks.isError ? <EmptyState title="Couldn't load tasks" description="There was a hiccup bringing in your list." action={<AppButton variant="outline" onClick={() => tasks.refetch()} data-testid="button-retry-tasks">Try again</AppButton>} /> : filtered.length ? <div>{filtered.map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} />)}</div> : <EmptyState title={search ? 'No matches here.' : 'Your list is clear.'} description={search ? 'Try another phrase or clear the search.' : 'Add the next thing you want to make progress on.'} action={!search ? <AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-empty-task"><Plus size={16} /> Add a task</AppButton> : null} />}</div>
     <TaskDialog open={dialog.open} onOpenChange={open => setDialog({ ...dialog, open })} editingTask={dialog.task} courses={courses.data ?? []} />
@@ -335,14 +336,15 @@ function CalendarPage() {
         <h1 className="cc-display mt-1 text-4xl font-semibold">Calendar</h1>
         <p className="mt-2 text-sm text-muted-foreground">The big picture of your semester.</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <AppButton variant="outline" onClick={() => { setCursor(new Date()); setSelectedDay(new Date()); }} data-testid="button-calendar-today">Today</AppButton>
+        <AgendaImportButton />
         <AppButton onClick={() => setDialog({ open: true, task: null, date: format(selectedDay, 'yyyy-MM-dd') })} data-testid="button-add-task-calendar"><Plus size={17} /> Add task</AppButton>
       </div>
     </section>
 
-    <div className="grid gap-8 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px]">
-      <div className="space-y-5">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_450px]">
+      <div className="min-w-0 space-y-5">
         <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
           <button className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setCursor(subMonths(cursor, 1))} data-testid="button-calendar-prev-month"><ChevronLeft size={20} /></button>
           <h2 className="cc-display text-2xl font-semibold tracking-tight">{format(cursor, 'MMMM yyyy')}</h2>
@@ -393,7 +395,7 @@ function CalendarPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>

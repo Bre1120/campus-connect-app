@@ -6,6 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './agendaImportCourse';
+export * from './agendaImportEntry';
+export * from './agendaImportEntryPriority';
+export * from './agendaImportEntryType';
+export * from './agendaImportInput';
+export * from './agendaImportResult';
 export * from './communityMessage';
 export * from './communityMessageAuthorRole';
 export * from './communityMessageInput';

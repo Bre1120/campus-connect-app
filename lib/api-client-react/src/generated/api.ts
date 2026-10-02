@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AgendaImportInput,
+  AgendaImportResult,
   CommunityMessage,
   CommunityMessageInput,
   CommunityReportInput,
@@ -384,6 +386,77 @@ export const useCreateTask = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateTaskMutationOptions(options));
+    }
+
+export const getImportAgendaUrl = () => {
+
+
+
+
+  return `/api/tasks/import`
+}
+
+/**
+ * @summary Import reviewed agenda entries into the signed-in account
+ */
+export const importAgenda = async (agendaImportInput: AgendaImportInput, options?: Parameters<typeof customFetch>[1]): Promise<AgendaImportResult> => {
+
+  return customFetch<AgendaImportResult>(getImportAgendaUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(agendaImportInput)
+  }
+);}
+
+
+
+
+
+export const getImportAgendaMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importAgenda>>, TError,{data: BodyType<AgendaImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importAgenda>>, TError,{data: BodyType<AgendaImportInput>}, TContext> => {
+
+const mutationKey = ['importAgenda'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importAgenda>>, {data: BodyType<AgendaImportInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importAgenda(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportAgendaMutationResult = NonNullable<Awaited<ReturnType<typeof importAgenda>>>
+    export type ImportAgendaMutationBody = BodyType<AgendaImportInput>
+    export type ImportAgendaMutationError = ErrorType<void>
+
+    /**
+ * @summary Import reviewed agenda entries into the signed-in account
+ */
+export const useImportAgenda = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importAgenda>>, TError,{data: BodyType<AgendaImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importAgenda>>,
+        TError,
+        {data: BodyType<AgendaImportInput>},
+        TContext
+      > => {
+      return useMutation(getImportAgendaMutationOptions(options));
     }
 
 export const getGetTaskUrl = (id: number,) => {

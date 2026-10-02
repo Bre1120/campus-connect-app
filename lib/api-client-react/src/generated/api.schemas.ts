@@ -5,6 +5,81 @@
  * Campus Connect academic organization API
  * OpenAPI spec version: 0.1.0
  */
+export interface AgendaImportCourse {
+  /**
+     * @minLength 1
+     * @maxLength 40
+     */
+  code: string;
+  /**
+     * @minLength 1
+     * @maxLength 140
+     */
+  name: string;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  courseId?: number | null;
+}
+
+export type AgendaImportEntryType = typeof AgendaImportEntryType[keyof typeof AgendaImportEntryType];
+
+
+export const AgendaImportEntryType = {
+  assignment: 'assignment',
+  exam: 'exam',
+  project: 'project',
+  reading: 'reading',
+  other: 'other',
+} as const;
+
+export type AgendaImportEntryPriority = typeof AgendaImportEntryPriority[keyof typeof AgendaImportEntryPriority];
+
+
+export const AgendaImportEntryPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export interface AgendaImportEntry {
+  /**
+     * @minLength 1
+     * @maxLength 300
+     */
+  title: string;
+  type: AgendaImportEntryType;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  dueDate: string;
+  /**
+     * @nullable
+     * @pattern ^([01]\d|2[0-3]):[0-5]\d$
+     */
+  dueTime?: string | null;
+  priority: AgendaImportEntryPriority;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  notes?: string | null;
+}
+
+export interface AgendaImportInput {
+  course: AgendaImportCourse;
+  /**
+     * @minItems 1
+     * @maxItems 100
+     */
+  tasks: AgendaImportEntry[];
+}
+
+export interface AgendaImportResult {
+  insertedCount: number;
+  skippedCount: number;
+  courseId: number;
+}
+
 export interface HealthStatus {
   status: string;
 }

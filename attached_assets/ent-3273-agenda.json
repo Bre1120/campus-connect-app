@@ -1,0 +1,104 @@
+{
+  "course": {
+    "code": "ENT 3273",
+    "name": "ENT 3273 — Fall 2026"
+  },
+  "tasks": [
+    {
+      "title": "Project 2 - Generating Financial Statements (Excel)",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "From Fall 2026 ENT 3273 section 83358 syllabus screenshot. 100 points. No due time shown."
+    },
+    {
+      "title": "Activity: Ratios {Salt and Shine Detailing}",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "100 points. No due time shown."
+    },
+    {
+      "title": "Activity: Watch ~4-Minute Video - Basics of Pro Forma Income Statements for Entrepreneurs",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "10 points. No due time shown."
+    },
+    {
+      "title": "Activity: Watch 2-Minute Video - A Pro Forma Balance Sheet for Entrepreneurs",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "5 points. No due time shown."
+    },
+    {
+      "title": "Activity: Watch 2-Minute Video - The Pro Forma Cash Flow Statement for Entrepreneurs",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "5 points. No due time shown."
+    },
+    {
+      "title": "Activity: Watch 8 Minute Video - How to Construct Sound Assumptions for Pro Forma Statements and Documents for Entrepreneurs",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "15 points. No due time shown."
+    },
+    {
+      "title": "Quiz 9: Ratios",
+      "type": "assignment",
+      "dueDate": "2026-10-02",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "100 points. Listed as Assignment in the syllabus despite the quiz title. No due time shown."
+    },
+    {
+      "title": "Midterm Survey of Instruction",
+      "type": "other",
+      "dueDate": "2026-10-09",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "0 points. Listed as Quiz in the syllabus; imported as Other because Campus Connect has no quiz category. No due time shown."
+    },
+    {
+      "title": "{calendar reminder} ENT3273 Project 4: QuickBooks B Homework",
+      "type": "assignment",
+      "dueDate": "2026-10-09",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "Calendar reminder as listed in the syllabus. No point value or due time shown."
+    },
+    {
+      "title": "Midterm Survey {Screenshot} <-- to get the 1% bonus",
+      "type": "assignment",
+      "dueDate": "2026-10-09",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "100 points. The visible title refers to a 1% bonus. No due time shown."
+    },
+    {
+      "title": "{calendar reminder} ENT3273 Project 5: QuickBooks C Homework",
+      "type": "assignment",
+      "dueDate": "2026-10-23",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "Calendar reminder as listed in the syllabus. No point value or due time shown."
+    },
+    {
+      "title": "{calendar reminder} ENT3273 Project 6: Financial Statement Analysis",
+      "type": "assignment",
+      "dueDate": "2026-11-16",
+      "dueTime": null,
+      "priority": "medium",
+      "notes": "Title is cropped at the bottom of the screenshot. Only the visible portion was transcribed; review the full syllabus title before importing. No point value or due time shown."
+    }
+  ]
+}

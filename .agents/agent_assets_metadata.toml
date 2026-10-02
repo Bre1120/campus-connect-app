@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "2TjGF1ZHdvwcnvvSPwMzx"
+uri = "file://attached_assets/ent-3273-agenda.json"
+type = "unspecified"
+title = "ENT 3273 agenda import — 12 entries"
+description = "Download this JSON file, then choose it under Import agenda in Campus Connect after publishing the update. Due times are unspecified; review the cropped final title before confirming."
+logical_id = "28476d48-235f-484f-aeae-a27aab20f1db"
+content_hash = "sha256:aa012744f59fe2472798ee8cce3df7ed06901605f6143b3e3d62a98fd17cb0ba"
+size = 3609
+mtime_ms = 1790964178095
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:6d17a13b-c330-42ca-bd08-940e2fc88057/28476d48-235f-484f-aeae-a27aab20f1db/40a7c351-5ea2-4c15-8317-e681cdc9ddcd"
+storage_version_token = "1790964920221185"
+content_type = "application/octet-stream"

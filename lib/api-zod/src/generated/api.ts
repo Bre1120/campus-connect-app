@@ -130,6 +130,47 @@ export const CreateTaskResponse = zod.object({
 
 
 /**
+ * @summary Import reviewed agenda entries into the signed-in account
+ */
+export const importAgendaBodyCourseCodeMax = 40;
+
+export const importAgendaBodyCourseNameMax = 140;
+
+
+export const importAgendaBodyTasksItemTitleMax = 300;
+
+export const importAgendaBodyTasksItemDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const importAgendaBodyTasksItemDueTimeRegExp = new RegExp('^([01]\\d|2[0-3]):[0-5]\\d$');
+export const importAgendaBodyTasksItemNotesMax = 2000;
+
+export const importAgendaBodyTasksMax = 100;
+
+
+
+export const ImportAgendaBody = zod.object({
+  "course": zod.object({
+  "code": zod.string().min(1).max(importAgendaBodyCourseCodeMax),
+  "name": zod.string().min(1).max(importAgendaBodyCourseNameMax),
+  "courseId": zod.int().min(1).nullish()
+}),
+  "tasks": zod.array(zod.object({
+  "title": zod.string().min(1).max(importAgendaBodyTasksItemTitleMax),
+  "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
+  "dueDate": zod.string().regex(importAgendaBodyTasksItemDueDateRegExp),
+  "dueTime": zod.string().regex(importAgendaBodyTasksItemDueTimeRegExp).nullish(),
+  "priority": zod.enum(['low', 'medium', 'high']),
+  "notes": zod.string().max(importAgendaBodyTasksItemNotesMax).nullish()
+})).min(1).max(importAgendaBodyTasksMax)
+})
+
+export const ImportAgendaResponse = zod.object({
+  "insertedCount": zod.int(),
+  "skippedCount": zod.int(),
+  "courseId": zod.int()
+})
+
+
+/**
  * @summary Get a task
  */
 export const GetTaskParams = zod.object({
