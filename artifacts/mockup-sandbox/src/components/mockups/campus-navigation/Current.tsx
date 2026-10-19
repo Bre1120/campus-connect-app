@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { BookOpen, LayoutDashboard, ListTodo, CalendarDays, UsersRound, ChevronRight, UserRound, Settings2, LogOut, Menu, X, Bell } from 'lucide-react';
 import './_group.css';
 const basePath = '';
-const useLocation = () => ['/dashboard', () => {}] as const;
+const useLocation = (): readonly [string, () => void] => ['/dashboard', () => {}];
 const useUser = () => ({user: {firstName: 'Student'}});
 const useClerk = () => ({signOut: (_options: unknown) => {}});
 function Link({href, ...props}: AnchorHTMLAttributes<HTMLAnchorElement>) { return <a href={href} {...props} onClick={e => e.preventDefault()} />; }
