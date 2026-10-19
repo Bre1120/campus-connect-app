@@ -159,6 +159,24 @@ router.patch("/tasks/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  if (parsed.data.courseId !== undefined) {
+    // Keep the task's not-found contract, and validate the destination before
+    // writing any of the submitted edits.
+    const userId = res.locals.userId as string;
+    if (!await findTask(userId, params.data.id)) {
+      res.status(404).json({ error: "Task not found" });
+      return;
+    }
+    const [course] = await db
+      .select({ id: coursesTable.id })
+      .from(coursesTable)
+      .where(and(eq(coursesTable.id, parsed.data.courseId), eq(coursesTable.ownerId, userId)));
+    if (!course) {
+      res.status(400).json({ error: "Course not found" });
+      return;
+    }
+  }
+
   const updates = {
     ...parsed.data,
     dueDate: parsed.data.dueDate

@@ -10,6 +10,8 @@ import { build } from "esbuild";
 // uses a private Unix socket (no TCP listener), and removes it on exit.
 const artifactDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const rootDir = path.resolve(artifactDir, "../..");
+// The manual-operation suite uses the same isolated database lifecycle.
+const manualOperations = process.argv.includes("--manual-operations");
 const tempDir = await mkdtemp(path.join(tmpdir(), "agenda-import-test-"));
 const dataDir = path.join(tempDir, "data");
 const socketDir = path.join(tempDir, "socket");
@@ -63,7 +65,9 @@ try {
   // Generate the test schema from the real Drizzle models, not a hand-copied fixture.
   await run("pnpm", ["--filter", "@workspace/db", "exec", "drizzle-kit", "push", "--force"]);
   await build({
-    entryPoints: [
+    entryPoints: manualOperations ? [
+      path.join(artifactDir, "src/routes/manual-operations.integration.test.ts"),
+    ] : [
       path.join(artifactDir, "src/lib/agenda-import.test.ts"),
       path.join(artifactDir, "src/routes/agenda-import.integration.test.ts"),
     ],
@@ -82,9 +86,12 @@ try {
       },
     }],
   });
-  await run(process.execPath, ["--test",
+  await run(process.execPath, ["--test", ...(manualOperations ? [
+    path.join(bundleDir, "manual-operations.integration.test.mjs"),
+  ] : [
     path.join(bundleDir, "lib/agenda-import.test.mjs"),
-    path.join(bundleDir, "routes/agenda-import.integration.test.mjs")]);
+    path.join(bundleDir, "routes/agenda-import.integration.test.mjs"),
+  ])]);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;
