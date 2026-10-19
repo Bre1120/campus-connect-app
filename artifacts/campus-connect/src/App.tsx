@@ -9,9 +9,8 @@ import { shadcn } from '@clerk/themes';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { addDays, addMonths, subMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from 'date-fns';
 import {
-  ArrowRight, Bell, BookOpen, CalendarDays, Check, ChevronRight,
-  ChevronLeft, Clock3, Flame, LayoutDashboard, ListTodo, LogOut,
-  Pencil, Plus, Search, Settings2, Sparkles, Trash2, UserRound, UsersRound,
+  ArrowRight, Bell, BookOpen, Check, ChevronRight,
+  ChevronLeft, Clock3, Flame, Pencil, Plus, Search, Sparkles, Trash2, UsersRound,
 } from 'lucide-react';
 import {
   getGetDashboardQueryKey, getGetTaskQueryKey, getListCoursesQueryKey, getListTasksQueryKey,
@@ -36,6 +35,7 @@ import { normalizeTaskCourseCode, presetCourseValue, taskCourseChoices, taskCour
 import { StudyStudioPage } from '@/pages/study-studio';
 import { CommunityPage } from '@/pages/community';
 import { LandingPage } from '@/pages/landing';
+import { CompactAppNavigation, GroupNavigation } from '@/components/compact-app-navigation';
 
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -200,48 +200,25 @@ function AppShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { user } = useUser();
   const { signOut } = useClerk();
-  const nav = [
-    { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
-    { href: '/tasks', label: 'All tasks', icon: ListTodo },
-    { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-    { href: '/study-studio', label: 'Study', accessibleLabel: 'Flashcards & AI', icon: BookOpen },
-    { href: '/community', label: 'Community', icon: UsersRound },
-    { href: '/profile', label: 'Profile', icon: UserRound },
-    { href: '/settings', label: 'Settings', icon: Settings2 },
-  ];
   return <div className="cc-grain min-h-[100dvh] bg-background">
     <main className="min-h-[100dvh]">
-      <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/90 px-5 backdrop-blur-md sm:px-8">
+      <header className="cc-app-header sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-border/70 bg-background/90 px-5 backdrop-blur-md sm:px-8">
         <Logo />
         <div className="flex items-center gap-3 sm:gap-5">
           <span className="hidden text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground sm:block">{format(new Date(), 'EEEE · MMM d')}</span>
           <div className="flex items-center gap-2" data-testid="text-header-student">
             <span className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">{user?.firstName?.slice(0, 1) ?? 'S'}</span>
-            <span className="text-sm font-semibold">{user?.firstName ?? 'Student'}</span>
+            <span className="cc-header-name max-w-28 truncate text-sm font-semibold">{user?.firstName ?? 'Student'}</span>
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-[1320px] px-5 pb-[calc(11rem+env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pt-8 lg:pb-[calc(8rem+env(safe-area-inset-bottom))]">{children}</div>
+      <div className="mx-auto max-w-[1320px] px-5 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pt-8">
+        <GroupNavigation location={location} onSignOut={() => signOut({ redirectUrl: basePath || '/' })} />
+        <div className={location === '/profile' || location === '/settings' ? 'cc-account-content' : undefined}>{children}</div>
+      </div>
     </main>
     <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-sidebar-foreground/10 bg-sidebar/95 text-sidebar-foreground shadow-[0_-10px_30px_-20px_hsl(var(--foreground)/.45)] backdrop-blur-xl [padding-bottom:env(safe-area-inset-bottom)]">
-      <nav aria-label="Main navigation" className="mx-auto grid max-w-[1320px] grid-cols-4 gap-1 px-2 py-2 sm:grid-cols-4 sm:px-6 lg:grid-cols-8 lg:gap-2">
-        {nav.map(item => {
-          const Icon = item.icon;
-          const active = location === item.href || (item.href === '/dashboard' && location === '/');
-          return <Link key={item.href} href={item.href} aria-label={item.accessibleLabel ?? item.label} aria-current={active ? 'page' : undefined}
-            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-center text-[10px] font-semibold leading-tight sm:text-xs ${active ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}
-            data-testid={`link-nav-${item.href.slice(1)}`}>
-            <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-            <span className="max-w-full truncate">{item.label}</span>
-          </Link>;
-        })}
-        <button type="button" onClick={() => signOut({ redirectUrl: basePath || '/' })} aria-label="Sign out"
-          className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-center text-[10px] font-semibold leading-tight text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground sm:text-xs"
-          data-testid="button-sign-out">
-          <LogOut size={18} />
-          <span className="max-w-full truncate">Sign out</span>
-        </button>
-      </nav>
+      <CompactAppNavigation location={location} />
       <div className="border-t border-sidebar-foreground/10 px-4 py-2 text-center">
         <a
           href="https://docs.google.com/forms/d/e/1FAIpQLSd9gYj6njHFB9V1_EN0djNRcLPjx865jcvqEP8M1owrl89r9Q/viewform?usp=header"
@@ -327,7 +304,7 @@ function TasksPage() {
   const toggleTask = (task: Task) => toggle.mutate({ id: task.id, data: { completed: !task.completed } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getListTasksQueryKey() }); client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); } });
   const deleteTask = (task: Task) => { if (window.confirm(`Remove "${task.title}" from your plan?`)) del.mutate({ id: task.id }, { onSuccess: () => { client.invalidateQueries({ queryKey: getListTasksQueryKey() }); client.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); toast({ title: 'Task removed' }); } }); };
   return <div className="cc-page space-y-7"><section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-primary">The full picture</p><h1 className="cc-display mt-1 text-4xl font-semibold">All tasks</h1><p className="mt-2 text-sm text-muted-foreground">Keep every assignment, exam, and idea in view.</p></div><div className="flex flex-wrap gap-2"><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task"><Plus size={17} /> Add task</AppButton></div></section>
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-3 text-muted-foreground" size={17} /><input className="field pl-10" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks or courses..." data-testid="input-search-tasks" /></div><div className="flex gap-2 overflow-x-auto"><select className="field min-w-[118px]" value={status} onChange={e => setStatus(e.target.value as typeof status)} data-testid="select-task-status"><option value="all">All tasks</option><option value="active">Active</option><option value="completed">Completed</option></select><select className="field min-w-[124px]" value={type} onChange={e => setType(e.target.value)} data-testid="select-task-filter-type"><option value="all">Every type</option>{Object.entries(typeLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></div></div>
+    <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm sm:flex-row"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 text-muted-foreground" size={17} /><input className="field pl-10" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks or courses..." data-testid="input-search-tasks" /></div><div className="flex min-w-0 gap-2"><select className="field min-w-0 flex-1 sm:min-w-[118px] sm:flex-none" value={status} onChange={e => setStatus(e.target.value as typeof status)} data-testid="select-task-status"><option value="all">All tasks</option><option value="active">Active</option><option value="completed">Completed</option></select><select className="field min-w-0 flex-1 sm:min-w-[124px] sm:flex-none" value={type} onChange={e => setType(e.target.value)} data-testid="select-task-filter-type"><option value="all">Every type</option>{Object.entries(typeLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></div></div>
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">{tasks.isLoading ? <TaskSkeleton rows={7} /> : tasks.isError ? <EmptyState title="Couldn't load tasks" description="There was a hiccup bringing in your list." action={<AppButton variant="outline" onClick={() => tasks.refetch()} data-testid="button-retry-tasks">Try again</AppButton>} /> : filtered.length ? <div>{filtered.map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} />)}</div> : <EmptyState title={search ? 'No matches here.' : 'Your list is clear.'} description={search ? 'Try another phrase or clear the search.' : 'Add the next thing you want to make progress on.'} action={!search ? <AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-empty-task"><Plus size={16} /> Add a task</AppButton> : null} />}</div>
     <TaskDialog open={dialog.open} onOpenChange={open => setDialog({ ...dialog, open })} editingTask={dialog.task} courses={courses.data ?? []} includeCoursePresets />
   </div>;
@@ -384,7 +361,7 @@ function CalendarPage() {
       <div className="min-w-0 space-y-5">
         <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm">
           <button className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setCursor(subMonths(cursor, 1))} data-testid="button-calendar-prev-month"><ChevronLeft size={20} /></button>
-          <h2 className="cc-display text-2xl font-semibold tracking-tight">{format(cursor, 'MMMM yyyy')}</h2>
+          <h2 className="calendar-month-title cc-display text-2xl font-semibold tracking-tight">{format(cursor, 'MMMM yyyy')}</h2>
           <button className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setCursor(addMonths(cursor, 1))} data-testid="button-calendar-next-month"><ChevronRight size={20} /></button>
         </div>
         

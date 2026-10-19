@@ -26,9 +26,9 @@ export function LandingPage() {
 
   return (
     <div className="cc-grain min-h-[100dvh] overflow-x-hidden bg-background">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8 relative z-10">
+      <header className="landing-header relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
         <Logo />
-        <div className="flex items-center gap-3">
+        <div className="landing-header-actions flex items-center gap-3">
           <Link href="/sign-in" className="rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" data-testid="link-sign-in">Sign in</Link>
           <Link href="/sign-up" className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:-translate-y-0.5" data-testid="link-sign-up">Get started</Link>
         </div>
@@ -42,7 +42,7 @@ export function LandingPage() {
               <span className="mr-2 size-1.5 rounded-full bg-[#23746a] animate-pulse" />
               Your Personal Study Space
             </Badge>
-            <h1 className="cc-display mt-8 max-w-xl text-6xl font-semibold leading-[.9] text-foreground sm:text-7xl lg:text-[88px]">
+            <h1 className="cc-display mt-8 max-w-xl text-5xl font-semibold leading-[.9] text-foreground sm:text-7xl lg:text-[88px]">
               Study with a little more <span className="text-primary italic">clarity.</span>
             </h1>
             <p className="mt-8 max-w-md text-lg leading-relaxed text-muted-foreground">
@@ -196,7 +196,7 @@ export function LandingPage() {
             <div className="absolute inset-0 bg-background/80" />
           </div>
           
-          <div className="relative z-10 mx-auto max-w-2xl text-center rounded-[3rem] border border-border bg-card/90 p-12 shadow-2xl backdrop-blur-md sm:p-16">
+          <div className="relative z-10 mx-auto max-w-2xl text-center rounded-[3rem] border border-border bg-card/90 p-6 shadow-2xl backdrop-blur-md sm:p-16">
             <p className="text-sm font-bold uppercase tracking-[.15em] text-primary">Ready to focus?</p>
             <h2 className="cc-display mx-auto mt-4 text-5xl font-semibold leading-tight sm:text-6xl">
               Your next chapter is already underway.

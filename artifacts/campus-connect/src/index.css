@@ -310,3 +310,235 @@ button:active:not(:disabled) { transform: translateY(1px); }
 input::placeholder, textarea::placeholder { color: hsl(var(--muted-foreground) / .72); }
 
 .cl-formFieldInput::placeholder { color: hsl(var(--muted-foreground) / .72); opacity: 1; }
+
+.cc-nav-secondary {
+  margin-bottom: 1.25rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  background: hsl(var(--card));
+}
+
+.cc-account-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cc-account-content .grid > * {
+  min-width: 0;
+}
+
+.cc-nav-primary {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  border-radius: .95rem;
+  padding: .45rem .75rem;
+  color: hsl(var(--sidebar-foreground) / .68);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.cc-nav-primary:hover {
+  background: hsl(var(--sidebar-accent) / .72);
+  color: hsl(var(--sidebar-foreground));
+}
+
+.cc-nav-primary-active,
+.cc-nav-primary-active:hover {
+  background: hsl(var(--sidebar-accent));
+  color: hsl(var(--primary));
+}
+
+.cc-nav-secondary-link {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  border-radius: 999px;
+  padding: .3rem .7rem;
+  color: hsl(var(--muted-foreground));
+  font-size: .8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cc-nav-secondary-link:hover,
+.cc-nav-secondary-link-active {
+  background: hsl(var(--primary) / .1);
+  color: hsl(var(--foreground));
+}
+
+.cc-nav-signout {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: .8rem;
+}
+
+.cc-nav-signout:hover {
+  color: hsl(var(--primary));
+}
+
+.cc-nav-primary:focus-visible,
+.cc-nav-secondary-link:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+@media (max-width: 380px) {
+  .cc-nav-primary {
+    gap: .35rem;
+    padding-inline: .4rem;
+  }
+
+  .cc-nav-secondary-link {
+    gap: .3rem;
+    padding-inline: .5rem;
+  }
+}
+
+/* Small screens: preserve the existing editorial layout while giving controls
+   room to wrap instead of forcing the document wider than the viewport. */
+html,
+body,
+#root {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.cc-page,
+.cc-page > *,
+.cc-page section,
+.cc-page article {
+  min-width: 0;
+}
+
+.cc-nav-shell nav {
+  padding-bottom: max(.5rem, env(safe-area-inset-bottom));
+}
+
+.cc-account-content,
+[data-testid="text-header-student"],
+.cc-page .prose {
+  overflow-wrap: anywhere;
+}
+
+[role="dialog"] {
+  overscroll-behavior: contain;
+  scroll-padding-block: 1rem;
+}
+
+@media (max-width: 767px) {
+  .cc-account-content {
+    overflow-wrap: anywhere;
+  }
+
+  .cc-page input,
+  .cc-page select,
+  .cc-page textarea,
+  [role="dialog"] input,
+  [role="dialog"] select,
+  [role="dialog"] textarea {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  [role="dialog"] {
+    width: min(calc(100vw - 1rem), 42rem);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    margin-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
+  }
+
+  .cc-page [data-testid="button-save-settings"] {
+    flex-shrink: 0;
+  }
+
+  .cc-page .calendar-month-title {
+    font-size: clamp(1.15rem, 6vw, 1.5rem);
+  }
+}
+
+@media (max-width: 380px) {
+  .landing-header {
+    flex-wrap: wrap;
+    row-gap: .5rem;
+    padding-inline: 1rem;
+  }
+
+  .landing-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: .25rem;
+  }
+
+  .landing-header-actions > * {
+    min-height: 2.75rem;
+  }
+
+  .cc-app-header {
+    padding-inline: 1rem;
+  }
+
+  .cc-header-name {
+    display: none;
+  }
+
+  .cc-page {
+    font-size: .94rem;
+  }
+
+  .dashboard-hero__copy {
+    padding: 26px 19px 23px;
+  }
+
+  .dashboard-hero__actions > * {
+    flex: 1 1 auto;
+  }
+
+  .cc-nav-primary {
+    min-height: 2.75rem;
+    font-size: .72rem;
+  }
+
+  .cc-nav-secondary-link {
+    min-height: 2.75rem;
+    font-size: .74rem;
+  }
+
+  .community-page {
+    height: calc(100dvh - 390px);
+    min-height: 180px;
+  }
+
+  .community-page [aria-label^="Message the"] {
+    min-width: 0;
+  }
+
+  .community-page select {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
