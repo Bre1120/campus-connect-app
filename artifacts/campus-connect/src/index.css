@@ -425,8 +425,44 @@ canvas {
   min-width: 0;
 }
 
-.cc-nav-shell nav {
-  padding-bottom: max(.5rem, env(safe-area-inset-bottom));
+.cc-page .grid > * {
+  min-width: 0;
+}
+
+.cc-page :where(h1, h2, h3, p) {
+  overflow-wrap: anywhere;
+}
+
+@layer components {
+  .field {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    border: 1px solid hsl(var(--input));
+    border-radius: .75rem;
+    background: hsl(var(--card));
+    padding: .65rem .8rem;
+    color: hsl(var(--foreground));
+    font-size: .875rem;
+    line-height: 1.5;
+  }
+
+  .field:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  .field:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+  }
+}
+
+@media (hover: none) {
+  .cc-task-actions {
+    opacity: 1;
+  }
 }
 
 .cc-account-content,
@@ -441,6 +477,33 @@ canvas {
 }
 
 @media (max-width: 767px) {
+  .landing-header {
+    gap: .5rem;
+  }
+
+  .landing-header > a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .landing-header > a .cc-display {
+    font-size: 17px;
+  }
+
+  .landing-header-actions {
+    gap: .25rem;
+  }
+
+  .landing-header-actions > a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    padding-inline: .75rem;
+    font-size: .8125rem;
+    white-space: nowrap;
+  }
+
   .cc-account-content {
     overflow-wrap: anywhere;
   }
@@ -468,6 +531,49 @@ canvas {
 
   .cc-page .calendar-month-title {
     font-size: clamp(1.15rem, 6vw, 1.5rem);
+  }
+
+  .community-page {
+    min-height: 40rem;
+  }
+
+  .community-page select {
+    max-width: 100%;
+  }
+
+  .cc-page .prose table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .cc-task-row {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: .75rem;
+    row-gap: .25rem;
+  }
+
+  .cc-task-row > button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .cc-task-actions {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .cc-task-actions button,
+  .cc-page button[data-testid^="button-edit-course-"],
+  .cc-page button[data-testid^="button-delete-course-"] {
+    display: inline-grid;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    place-items: center;
   }
 }
 
@@ -516,11 +622,6 @@ canvas {
   .cc-nav-secondary-link {
     min-height: 2.75rem;
     font-size: .74rem;
-  }
-
-  .community-page {
-    height: calc(100dvh - 390px);
-    min-height: 180px;
   }
 
   .community-page [aria-label^="Message the"] {

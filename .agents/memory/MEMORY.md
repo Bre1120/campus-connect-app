@@ -4,3 +4,4 @@
 - [Workspace package tools](workspace-package-tools.md) — the package callback cannot target pnpm leaf packages; preserve workspace-root protection.
 - [Managed study AI](managed-study-ai.md) — prefer managed OpenAI access; personal credentials previously failed a real assistant request.
 - [Agenda import policy](agenda-import-policy.md) — imports are additive, not sync; preserve completion and edits when a title/date matches in the same course.
+- [Responsive verification](responsive-verification.md) — shared controls need phone, tablet, and desktop checks; check usable scroll-area height as well as overflow.

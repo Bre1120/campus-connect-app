@@ -47,7 +47,7 @@ export function CommunityPage() {
          </div>
        </div>
        
-       <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 shrink-0">
          <button 
            onClick={() => setRoom('students')} 
            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${room === 'students' ? 'bg-sidebar text-sidebar-foreground shadow-sm' : 'bg-card border border-border text-muted-foreground hover:bg-muted'}`}
@@ -98,7 +98,7 @@ function MessageFeed({ room }: { room: CommunityMessageRoom }) {
 
   return (
     <>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+      <div ref={scrollRef} className="min-h-32 flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
         {isLoading && <div className="py-10 text-center text-sm font-medium text-muted-foreground animate-pulse">Loading messages...</div>}
         {isError && <div className="py-10 text-center text-sm font-medium text-destructive" role="alert">Failed to load messages. <button type="button" onClick={() => refetch()} className="underline">Try again</button></div>}
         {messages?.map((msg) => (
@@ -277,7 +277,7 @@ function MessageInput({ room }: { room: CommunityMessageRoom }) {
           <select 
             value={role} 
             onChange={e => setRole(e.target.value as CommunityMessageAuthorRole)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="student">Student</option>
             <option value="tutor">Self-described Tutor (not verified)</option>
