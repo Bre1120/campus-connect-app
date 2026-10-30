@@ -4,7 +4,8 @@ Campus Connect helps college students organize assignments, exams, projects, and
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- Outside Replit, the web dev server proxies `/api` to `http://localhost:8080` (override with `API_PROXY_TARGET`)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec

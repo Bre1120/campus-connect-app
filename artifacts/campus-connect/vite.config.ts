@@ -27,6 +27,12 @@ if (!basePath) {
   );
 }
 
+// On Replit the path router sends /api to the API server; locally, Vite forwards it.
+const apiProxyTarget =
+  process.env.REPL_ID === undefined
+    ? (process.env.API_PROXY_TARGET ?? 'http://localhost:8080')
+    : undefined;
+
 export default defineConfig({
   base: basePath,
   plugins: [
@@ -72,6 +78,9 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    ...(apiProxyTarget
+      ? { proxy: { '/api': { target: apiProxyTarget, changeOrigin: false } } }
+      : {}),
   },
   preview: {
     port,
