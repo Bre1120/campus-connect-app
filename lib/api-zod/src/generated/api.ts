@@ -21,6 +21,11 @@ export const HealthCheckResponse = zod.object({
  * Returns the current student's daily tasks, upcoming deadlines, and completion progress.
  * @summary Get dashboard overview
  */
+export const getDashboardResponseTodayTasksItemDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getDashboardResponseUpcomingTasksItemDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getDashboardResponseCompletionDaysItemDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
 export const GetDashboardResponse = zod.object({
   "todayTasks": zod.array(zod.object({
   "id": zod.int(),
@@ -29,7 +34,7 @@ export const GetDashboardResponse = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(getDashboardResponseTodayTasksItemDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),
@@ -44,7 +49,7 @@ export const GetDashboardResponse = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(getDashboardResponseUpcomingTasksItemDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),
@@ -57,7 +62,7 @@ export const GetDashboardResponse = zod.object({
   "total": zod.int(),
   "percentage": zod.int(),
   "days": zod.array(zod.object({
-  "date": zod.coerce.date(),
+  "date": zod.string().regex(getDashboardResponseCompletionDaysItemDateRegExp),
   "completed": zod.int(),
   "total": zod.int()
 }))
@@ -78,6 +83,9 @@ export const ListTasksQueryParams = zod.object({
   "endDate": zod.date().optional()
 })
 
+export const listTasksResponseDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
 export const ListTasksResponseItem = zod.object({
   "id": zod.int(),
   "title": zod.string(),
@@ -85,7 +93,7 @@ export const ListTasksResponseItem = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(listTasksResponseDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),
@@ -112,6 +120,9 @@ export const CreateTaskBody = zod.object({
   "notes": zod.string().nullish()
 })
 
+export const createTaskResponseDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
 export const CreateTaskResponse = zod.object({
   "id": zod.int(),
   "title": zod.string(),
@@ -119,7 +130,7 @@ export const CreateTaskResponse = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(createTaskResponseDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),
@@ -177,6 +188,9 @@ export const GetTaskParams = zod.object({
   "id": zod.coerce.number().int()
 })
 
+export const getTaskResponseDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
 export const GetTaskResponse = zod.object({
   "id": zod.int(),
   "title": zod.string(),
@@ -184,7 +198,7 @@ export const GetTaskResponse = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(getTaskResponseDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),
@@ -215,6 +229,9 @@ export const UpdateTaskBody = zod.object({
   "completed": zod.boolean().optional()
 })
 
+export const updateTaskResponseDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
 export const UpdateTaskResponse = zod.object({
   "id": zod.int(),
   "title": zod.string(),
@@ -222,7 +239,7 @@ export const UpdateTaskResponse = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(updateTaskResponseDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),
@@ -253,6 +270,9 @@ export const ToggleTaskCompletionBody = zod.object({
   "completed": zod.boolean()
 })
 
+export const toggleTaskCompletionResponseDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
 export const ToggleTaskCompletionResponse = zod.object({
   "id": zod.int(),
   "title": zod.string(),
@@ -260,7 +280,7 @@ export const ToggleTaskCompletionResponse = zod.object({
   "courseName": zod.string(),
   "courseCode": zod.string(),
   "type": zod.enum(['assignment', 'exam', 'project', 'reading', 'other']),
-  "dueDate": zod.coerce.date(),
+  "dueDate": zod.string().regex(toggleTaskCompletionResponseDueDateRegExp),
   "dueTime": zod.string().nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
   "completed": zod.boolean(),

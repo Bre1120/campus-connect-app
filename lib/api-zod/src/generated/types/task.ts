@@ -15,7 +15,8 @@ export interface Task {
   courseName: string;
   courseCode: string;
   type: TaskType;
-  dueDate: Date;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  dueDate: string;
   /** @nullable */
   dueTime?: string | null;
   priority: TaskPriority;

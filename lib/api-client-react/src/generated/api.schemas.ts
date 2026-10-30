@@ -136,6 +136,7 @@ export interface Task {
   courseName: string;
   courseCode: string;
   type: TaskType;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   dueDate: string;
   /** @nullable */
   dueTime?: string | null;
@@ -219,6 +220,7 @@ export interface TaskCompletionInput {
 }
 
 export interface CompletionDay {
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   date: string;
   completed: number;
   total: number;

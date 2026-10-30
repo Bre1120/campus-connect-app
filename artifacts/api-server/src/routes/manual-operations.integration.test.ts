@@ -266,7 +266,7 @@ describe("manual task/course HTTP + PostgreSQL account isolation", { concurrency
     assert.equal(task.courseCode, otherOwn.code);
     assert.equal(task.title, "Moved assignment");
     assert.equal(task.type, "project");
-    assert.equal(task.dueDate.toISOString().slice(0, 10), "2026-10-15");
+    assert.equal(task.dueDate, "2026-10-15");
     assert.equal(task.dueTime, "15:30");
     assert.equal(task.priority, "high");
     assert.equal(task.notes, "Edited notes");

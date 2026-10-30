@@ -646,8 +646,10 @@ components:
           type: string
           enum: [assignment, exam, project, reading, other]
         dueDate:
+          # A pattern, not format: date, so responses stay "YYYY-MM-DD" strings;
+          # format: date is coerced to a Date and serialized as UTC midnight.
           type: string
-          format: date
+          pattern: '^\d{4}-\d{2}-\d{2}$'
         dueTime:
           type: [string, "null"]
         priority:
@@ -748,7 +750,7 @@ components:
       properties:
         date:
           type: string
-          format: date
+          pattern: '^\d{4}-\d{2}-\d{2}$'
         completed:
           type: integer
         total:
