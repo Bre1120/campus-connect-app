@@ -1,7 +1,28 @@
 import React from 'react';
 import { useAuth } from '@clerk/react';
 import { Link, Redirect } from 'wouter';
-import { ArrowRight, BookOpen, Clock3, CalendarDays, ListTodo, Bot, Quote } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock3, CalendarDays, CalendarPlus, Flag, ListTodo, Bot, Quote, TrendingUp } from 'lucide-react';
+
+const howItWorksSteps = [
+  {
+    icon: CalendarPlus,
+    iconClassName: 'bg-primary text-primary-foreground',
+    title: 'Add your assignments and deadlines',
+    description: 'Drop in assignments, exams, and projects with their due dates so everything lives in one place.',
+  },
+  {
+    icon: Flag,
+    iconClassName: 'bg-sidebar text-sidebar-foreground',
+    title: 'Organize tasks by priority',
+    description: 'Mark what matters most as high, medium, or low priority so you always know where to start.',
+  },
+  {
+    icon: TrendingUp,
+    iconClassName: 'bg-[#e4f3f0] text-[#23746a]',
+    title: 'Track your progress',
+    description: 'Check tasks off as you go and watch your weekly rhythm build across the semester.',
+  },
+];
 
 function Logo({ inverse = false }: { inverse?: boolean }) {
   return (
@@ -204,6 +225,31 @@ export function LandingPage() {
             <Link href="/sign-up" className="mt-10 inline-flex h-14 items-center gap-2 rounded-2xl bg-primary px-8 text-base font-bold text-primary-foreground shadow-lg hover:-translate-y-1 hover:shadow-xl transition-all" data-testid="link-create-account-bottom">
               Create your account <ArrowRight size={18} />
             </Link>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section id="how-it-works" className="border-t border-border bg-card/50 py-24" aria-labelledby="how-it-works-heading" data-testid="section-how-it-works">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <div className="mb-16 max-w-2xl text-center mx-auto">
+              <Badge className="bg-primary/15 text-primary mb-6">How It Works</Badge>
+              <h2 id="how-it-works-heading" className="cc-display text-4xl font-semibold sm:text-5xl">Three steps to a calmer semester.</h2>
+              <p className="mt-4 text-lg text-muted-foreground">Getting organized takes minutes, not a whole weekend.</p>
+            </div>
+
+            <ol className="grid gap-8 md:grid-cols-3">
+              {howItWorksSteps.map(({ icon: Icon, iconClassName, title, description }, i) => (
+                <li key={title} className="relative rounded-3xl border border-border bg-card p-8 shadow-sm transition-all hover:shadow-md hover:-translate-y-1" data-testid={`how-it-works-step-${i + 1}`}>
+                  <span className="cc-display absolute right-8 top-6 text-5xl font-semibold text-primary/20" aria-hidden="true">{i + 1}</span>
+                  <div className={`mb-6 grid size-12 place-items-center rounded-xl ${iconClassName}`}>
+                    <Icon size={22} />
+                  </div>
+                  <p className="text-xs font-bold uppercase tracking-[.15em] text-primary">Step {i + 1}</p>
+                  <h3 className="cc-display mt-2 text-2xl font-semibold">{title}</h3>
+                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">{description}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
       </main>
