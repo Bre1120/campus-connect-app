@@ -10,16 +10,14 @@ globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 
-async function buildAll() {
-  const distDir = path.resolve(artifactDir, "dist");
-  await rm(distDir, { recursive: true, force: true });
-
-  await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+// Shared by this build and build-vercel.mjs so both bundles stay identical.
+export function apiBuildOptions({ entryPoints, outdir }) {
+  return {
+    entryPoints,
     platform: "node",
     bundle: true,
     format: "esm",
-    outdir: distDir,
+    outdir,
     outExtension: { ".js": ".mjs" },
     logLevel: "info",
     // Some packages may not be bundleable, so we externalize them, we can add more here as needed.
@@ -117,10 +115,25 @@ globalThis.__filename = __bannerUrl.fileURLToPath(import.meta.url);
 globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
-  });
+  };
 }
 
-buildAll().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+async function buildAll() {
+  const distDir = path.resolve(artifactDir, "dist");
+  await rm(distDir, { recursive: true, force: true });
+
+  await esbuild(
+    apiBuildOptions({
+      entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+      outdir: distDir,
+    }),
+  );
+}
+
+// Only build when run directly, not when imported by build-vercel.mjs.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  buildAll().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
