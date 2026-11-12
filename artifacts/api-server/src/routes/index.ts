@@ -8,6 +8,7 @@ import profileRouter from "./profile";
 import flashcardsRouter from "./flashcards";
 import studyAssistantRouter from "./study-assistant";
 import communityRouter from "./community";
+import studySessionsRouter from "./study-sessions";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(profileRouter);
 router.use(flashcardsRouter);
 router.use(studyAssistantRouter);
 router.use(communityRouter);
+router.use(studySessionsRouter);
 
 export default router;

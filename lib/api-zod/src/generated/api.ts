@@ -633,3 +633,73 @@ export const ReportCommunityMessageResponse = zod.object({
 })
 
 
+/**
+ * @summary List the student's study sessions, newest first
+ */
+export const listStudySessionsQueryFromRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const ListStudySessionsQueryParams = zod.object({
+  "from": zod.coerce.string().regex(listStudySessionsQueryFromRegExp).optional().describe('Only sessions studied on or after this calendar date')
+})
+
+export const listStudySessionsResponseStudiedOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const ListStudySessionsResponseItem = zod.object({
+  "id": zod.int(),
+  "courseId": zod.int(),
+  "courseName": zod.string(),
+  "courseCode": zod.string(),
+  "courseColor": zod.string(),
+  "minutes": zod.int(),
+  "note": zod.string().nullish(),
+  "studiedOn": zod.string().regex(listStudySessionsResponseStudiedOnRegExp),
+  "createdAt": zod.coerce.date()
+})
+export const ListStudySessionsResponse = zod.array(ListStudySessionsResponseItem)
+
+
+/**
+ * @summary Log a study session
+ */
+export const createStudySessionBodyMinutesMax = 600;
+
+export const createStudySessionBodyNoteMax = 500;
+
+export const createStudySessionBodyStudiedOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const CreateStudySessionBody = zod.object({
+  "courseId": zod.int(),
+  "minutes": zod.int().min(1).max(createStudySessionBodyMinutesMax),
+  "note": zod.string().max(createStudySessionBodyNoteMax).nullish(),
+  "studiedOn": zod.string().regex(createStudySessionBodyStudiedOnRegExp)
+})
+
+export const createStudySessionResponseStudiedOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const CreateStudySessionResponse = zod.object({
+  "id": zod.int(),
+  "courseId": zod.int(),
+  "courseName": zod.string(),
+  "courseCode": zod.string(),
+  "courseColor": zod.string(),
+  "minutes": zod.int(),
+  "note": zod.string().nullish(),
+  "studiedOn": zod.string().regex(createStudySessionResponseStudiedOnRegExp),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a study session
+ */
+export const DeleteStudySessionParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const DeleteStudySessionResponse = zod.void()
+
+

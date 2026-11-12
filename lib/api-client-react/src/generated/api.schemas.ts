@@ -440,6 +440,36 @@ export interface CommunityReportReceipt {
   received: boolean;
 }
 
+export interface StudySession {
+  id: number;
+  courseId: number;
+  courseName: string;
+  courseCode: string;
+  courseColor: string;
+  minutes: number;
+  /** @nullable */
+  note?: string | null;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  studiedOn: string;
+  createdAt: string;
+}
+
+export interface StudySessionInput {
+  courseId: number;
+  /**
+     * @minimum 1
+     * @maximum 600
+     */
+  minutes: number;
+  /**
+     * @maxLength 500
+     * @nullable
+     */
+  note?: string | null;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  studiedOn: string;
+}
+
 export type ListTasksParams = {
 status?: ListTasksStatus;
 type?: ListTasksType;
@@ -479,4 +509,12 @@ export const ListCommunityMessagesRoom = {
   students: 'students',
   help: 'help',
 } as const;
+
+export type ListStudySessionsParams = {
+/**
+ * Only sessions studied on or after this calendar date
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+from?: string;
+};
 

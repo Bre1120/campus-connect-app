@@ -24,6 +24,7 @@ import {
 } from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AgendaImportButton } from '@/components/agenda-import';
+import { StudySessionsCard } from '@/components/study-sessions';
 import { DashboardHero } from '@/components/dashboard-hero';
 import '@/components/dashboard-hero.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -281,6 +282,7 @@ function DashboardPage() {
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex-1 bg-gradient-to-br from-card to-[#23746a]/10 border-[#23746a]/30"><div className="flex items-start justify-between"><div><h2 className="cc-display mt-1 text-2xl font-semibold">Community</h2></div><span className="grid size-10 place-items-center rounded-xl bg-[#23746a] text-primary-foreground"><UsersRound size={19} /></span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">Connect with peers, tutors, and advisors.</p><Link href="/community" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#23746a] hover:gap-3" data-testid="link-open-community">Join conversation <ArrowRight size={16} /></Link></div>
       </div>
     </section>
+    <StudySessionsCard />
     <section className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Today</p><h2 className="cc-display mt-1 text-2xl font-semibold">{isToday(new Date()) ? 'Your focus list' : 'Your tasks'}</h2></div><Link href="/tasks" className="text-xs font-bold text-primary hover:underline" data-testid="link-all-tasks">See all</Link></div>{isLoading ? <TaskSkeleton /> : today.length ? <div>{today.map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} />)}</div> : <EmptyState title="A blank page, for now." description="Nothing is due today. Use the breathing room to get ahead." action={<AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-first-task"><Plus size={16} /> Add a task</AppButton>} />}</div>
       <div><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.13em] text-muted-foreground">Coming up</p><h2 className="cc-display mt-1 text-2xl font-semibold">Next deadlines</h2></div><Link href="/calendar" className="text-xs font-bold text-primary hover:underline" data-testid="link-calendar">Open calendar</Link></div><div className="rounded-2xl border border-border bg-card p-5 shadow-sm">{isLoading ? <TaskSkeleton rows={3} /> : upcoming.length ? upcoming.slice(0, 4).map(task => <TaskRow key={task.id} task={task} onToggle={toggleTask} onEdit={task => setDialog({ open: true, task })} onDelete={deleteTask} compact />) : <EmptyState title="No deadlines ahead" description="Your future self is feeling very organized." />}</div></div>

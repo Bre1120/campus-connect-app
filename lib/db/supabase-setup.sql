@@ -63,6 +63,16 @@ CREATE TABLE "student_profiles" (
 	"year" text DEFAULT '' NOT NULL
 );
 
+CREATE TABLE "study_sessions" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "study_sessions_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"owner_id" text NOT NULL,
+	"course_id" integer NOT NULL,
+	"minutes" integer NOT NULL,
+	"note" text,
+	"studied_on" date NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE "tasks" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "tasks_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"owner_id" text NOT NULL,
@@ -81,6 +91,7 @@ CREATE TABLE "tasks" (
 ALTER TABLE "community_reports" ADD CONSTRAINT "community_reports_message_id_community_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."community_messages"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "flashcard_decks" ADD CONSTRAINT "flashcard_decks_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE set null ON UPDATE no action;
 ALTER TABLE "flashcards" ADD CONSTRAINT "flashcards_deck_id_flashcard_decks_id_fk" FOREIGN KEY ("deck_id") REFERENCES "public"."flashcard_decks"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "study_sessions" ADD CONSTRAINT "study_sessions_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE cascade ON UPDATE no action;
 
 -- Security: the app reads and writes these tables only through its own API
@@ -94,4 +105,5 @@ ALTER TABLE "flashcard_decks" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "flashcards" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "student_preferences" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "student_profiles" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "study_sessions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "tasks" ENABLE ROW LEVEL SECURITY;

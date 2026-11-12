@@ -22,6 +22,8 @@ tags:
     description: Flashcards, reviews, and AI study support
   - name: community
     description: Student and volunteer help conversations
+  - name: study-sessions
+    description: Logged study time
 paths:
   /healthz:
     get:
@@ -491,6 +493,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CommunityReportReceipt"
+  /study-sessions:
+    get:
+      operationId: listStudySessions
+      tags: [study-sessions]
+      summary: List the student's study sessions, newest first
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: Only sessions studied on or after this calendar date
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+      responses:
+        "200":
+          description: Study sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudySession"
+    post:
+      operationId: createStudySession
+      tags: [study-sessions]
+      summary: Log a study session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudySessionInput"
+      responses:
+        "201":
+          description: Logged study session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudySession"
+        "404":
+          description: Course not found
+  /study-sessions/{id}:
+    delete:
+      operationId: deleteStudySession
+      tags: [study-sessions]
+      summary: Delete a study session
+      parameters:
+        - $ref: "#/components/parameters/StudySessionId"
+      responses:
+        "204":
+          description: Study session deleted
+        "404":
+          description: Study session not found
 components:
   parameters:
     TaskId:
@@ -518,6 +573,12 @@ components:
       schema:
         type: integer
     CommunityMessageId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    StudySessionId:
       name: id
       in: path
       required: true
@@ -958,4 +1019,44 @@ components:
       required: [received]
       properties:
         received: { type: boolean }
-
+    StudySession:
+      type: object
+      required: [id, courseId, courseName, courseCode, courseColor, minutes, studiedOn, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        courseName:
+          type: string
+        courseCode:
+          type: string
+        courseColor:
+          type: string
+        minutes:
+          type: integer
+        note:
+          type: [string, "null"]
+        studiedOn:
+          # A pattern, not format: date, so it stays a "YYYY-MM-DD" string.
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+        createdAt:
+          type: string
+          format: date-time
+    StudySessionInput:
+      type: object
+      required: [courseId, minutes, studiedOn]
+      properties:
+        courseId:
+          type: integer
+        minutes:
+          type: integer
+          minimum: 1
+          maximum: 600
+        note:
+          type: [string, "null"]
+          maxLength: 500
+        studiedOn:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
