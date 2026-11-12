@@ -24,6 +24,7 @@ import {
 } from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AgendaImportButton } from '@/components/agenda-import';
+import { OverdueTasksCard } from '@/components/overdue-tasks';
 import { StudySessionsCard } from '@/components/study-sessions';
 import { DashboardHero } from '@/components/dashboard-hero';
 import '@/components/dashboard-hero.css';
@@ -273,6 +274,7 @@ function DashboardPage() {
       firstName={user?.firstName ?? 'student'}
       actions={<><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></>}
     />
+    <OverdueTasksCard />
     {isError ? <div className="flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm"><span>We couldn't load your study plan.</span><AppButton variant="outline" onClick={() => refetch()} data-testid="button-retry-dashboard">Try again</AppButton></div> : null}
     <section className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,.65fr)]">
       <div className="rounded-2xl bg-sidebar p-6 text-sidebar-foreground shadow-lg sm:p-8"><div className="flex items-start justify-between"><div><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><Flame size={16} /> This week</div><h2 className="cc-display text-3xl font-semibold">Keep your rhythm.</h2><p className="mt-2 max-w-sm text-sm leading-6 text-sidebar-foreground/60">Small, consistent wins are what move a semester forward.</p></div><div className="grid size-16 place-items-center rounded-full border-[6px] border-primary/25 border-t-primary text-lg font-bold text-primary">{data?.completion.percentage ?? 0}%</div></div><div className="mt-7 grid grid-cols-7 gap-2">{(data?.completion.days ?? []).slice(0, 7).map((day, i) => <div key={day.date} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent p-1"><div className="flex h-full items-end"><div className="w-full rounded-full bg-primary" style={{ height: `${day.total ? Math.max(10, (day.completed / day.total) * 100) : 8}%` }} /></div></div><span className="text-[10px] font-semibold uppercase text-sidebar-foreground/45">{format(parseISO(day.date), 'EEEEE')}</span></div>)}{!data?.completion.days?.length ? Array.from({ length: 7 }).map((_, i) => <div key={i} className="text-center"><div className="mx-auto mb-2 h-20 w-full max-w-8 rounded-full bg-sidebar-accent" /><span className="text-[10px] text-sidebar-foreground/45">—</span></div>) : null}</div><div className="mt-5 flex items-center justify-between text-xs text-sidebar-foreground/55"><span>{data?.completion.completed ?? 0} completed</span><span>{data?.completion.total ?? 0} planned this week</span></div></div>
