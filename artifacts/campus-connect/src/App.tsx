@@ -25,7 +25,7 @@ import {
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AgendaImportButton } from '@/components/agenda-import';
 import { OverdueTasksCard } from '@/components/overdue-tasks';
-import { StudySessionsCard } from '@/components/study-sessions';
+import { LogSessionButton, StudySessionsCard } from '@/components/study-sessions';
 import { CourseTag } from '@/components/course-tag';
 import { DashboardHero } from '@/components/dashboard-hero';
 import '@/components/dashboard-hero.css';
@@ -274,7 +274,7 @@ function DashboardPage() {
     <DashboardHero
       greeting={greeting}
       firstName={user?.firstName ?? 'student'}
-      actions={<><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></>}
+      actions={<><LogSessionButton /><AgendaImportButton /><AppButton onClick={() => setDialog({ open: true, task: null })} data-testid="button-add-task-dashboard"><Plus size={17} /> Add task</AppButton></>}
     />
     <OverdueTasksCard />
     {isError ? <div className="flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm"><span>We couldn't load your study plan.</span><AppButton variant="outline" onClick={() => refetch()} data-testid="button-retry-dashboard">Try again</AppButton></div> : null}

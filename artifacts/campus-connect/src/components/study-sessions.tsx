@@ -104,6 +104,19 @@ export function StudySessionsCard() {
   </section>;
 }
 
+/** "Log study session" button for the top of the dashboard, so logging doesn't require scrolling to the card. */
+export function LogSessionButton() {
+  const client = useQueryClient();
+  const [open, setOpen] = useState(false);
+  return <>
+    <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary/8 px-3.5 text-sm font-semibold text-primary hover:border-primary/60 hover:bg-primary/12 sm:px-4" data-testid="button-log-session-top">
+      <Clock3 size={16} /> <span>Log study session</span>
+    </button>
+    {/* No params: refreshes every week's session list, including the study-time card's. */}
+    <LogSessionDialog open={open} onOpenChange={setOpen} onLogged={() => void client.invalidateQueries({ queryKey: getListStudySessionsQueryKey() })} />
+  </>;
+}
+
 function LogSessionDialog({ open, onOpenChange, onLogged }: { open: boolean; onOpenChange: (open: boolean) => void; onLogged: () => void }) {
   const { toast } = useToast();
   const courses = useListCourses();
