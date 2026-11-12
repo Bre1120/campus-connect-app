@@ -7,6 +7,7 @@ import {
   useListTasks, useToggleTaskCompletion, useUpdateTask,
   type Task,
 } from '@workspace/api-client-react';
+import { CourseTag } from '@/components/course-tag';
 import { useToast } from '@/hooks/use-toast';
 
 function overdueLabel(dueDate: string, today: Date) {
@@ -69,7 +70,7 @@ export function OverdueTasksCard() {
         return <div key={task.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center" data-testid={`row-overdue-${task.id}`}>
           <div className="min-w-0 flex-1">
             <div className="break-words text-sm font-semibold">{task.title}</div>
-            <div className="mt-1 text-xs text-muted-foreground"><span className="font-semibold text-foreground">{task.courseCode}</span> · {format(parseISO(task.dueDate), 'MMM d')} · <span className="font-semibold text-destructive">{overdueLabel(task.dueDate, now)}</span></div>
+            <div className="mt-1 text-xs text-muted-foreground"><CourseTag code={task.courseCode} color={task.courseColor} className="text-foreground" /> · {format(parseISO(task.dueDate), 'MMM d')} · <span className="font-semibold text-destructive">{overdueLabel(task.dueDate, now)}</span></div>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <button type="button" disabled={busy} onClick={() => markDone(task)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground disabled:opacity-60" data-testid={`button-overdue-done-${task.id}`}><Check size={14} /> Done</button>

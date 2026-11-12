@@ -10,6 +10,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { CourseTag } from '@/components/course-tag';
 import { useToast } from '@/hooks/use-toast';
 
 const quickMinutes = [15, 25, 45, 60];
@@ -78,7 +79,7 @@ export function StudySessionsCard() {
     {byCourse.length ? <div className="mt-5 space-y-3" data-testid="list-study-by-course">
       {byCourse.map(course => <div key={course.code}>
         <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-          <span className="min-w-0 truncate"><span className="font-semibold" style={{ color: course.color }}>{course.code}</span> <span className="text-muted-foreground">· {course.name}</span></span>
+          <span className="min-w-0 truncate"><CourseTag code={course.code} color={course.color} className="text-foreground" /> <span className="text-muted-foreground">· {course.name}</span></span>
           <span className="shrink-0 font-semibold">{formatMinutes(course.minutes)}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -92,7 +93,7 @@ export function StudySessionsCard() {
       {list.slice(0, 5).map(session => <div key={session.id} className="flex items-center gap-3 border-b border-border/60 py-2.5 last:border-0" data-testid={`row-study-session-${session.id}`}>
         <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"><Clock3 size={15} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold"><span style={{ color: session.courseColor }}>{session.courseCode}</span> · {formatMinutes(session.minutes)}</div>
+          <div className="text-sm font-semibold"><CourseTag code={session.courseCode} color={session.courseColor} /> · {formatMinutes(session.minutes)}</div>
           <div className="truncate text-xs text-muted-foreground">{format(parseISO(session.studiedOn), 'EEE, MMM d')}{session.note ? ` · ${session.note}` : ''}</div>
         </div>
         <button type="button" aria-label={`Delete ${session.courseCode} session`} onClick={() => remove(session)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" data-testid={`button-delete-session-${session.id}`}><Trash2 size={15} /></button>

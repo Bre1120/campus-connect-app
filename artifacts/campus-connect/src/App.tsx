@@ -26,6 +26,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { AgendaImportButton } from '@/components/agenda-import';
 import { OverdueTasksCard } from '@/components/overdue-tasks';
 import { StudySessionsCard } from '@/components/study-sessions';
+import { CourseTag } from '@/components/course-tag';
 import { DashboardHero } from '@/components/dashboard-hero';
 import '@/components/dashboard-hero.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -102,7 +103,7 @@ function TaskRow({ task, onToggle, onEdit, onDelete, compact = false }: { task: 
     <div className="min-w-0 flex-1">
       <div className={`break-words text-sm font-semibold sm:truncate ${task.completed ? 'line-through' : ''}`}>{task.title}</div>
       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span className="font-semibold" style={{ color: '#278476' }}>{task.courseCode}</span>
+        <CourseTag code={task.courseCode} color={task.courseColor} className="text-foreground" />
         <span className="size-1 rounded-full bg-border" />
         <span>{task.dueTime && !compact ? task.dueTime : format(parseISO(task.dueDate), 'MMM d')}</span>
       </div>
@@ -395,14 +396,14 @@ function CalendarPage() {
                 
                 {/* Mobile indicators */}
                 <div className="mt-1 flex flex-wrap justify-center gap-1 sm:hidden">
-                  {dayTasks.slice(0, 3).map((t, i) => <div key={i} className={`size-1.5 rounded-full bg-current ${typeColors[t.type].split(' ')[1]}`} />)}
+                  {dayTasks.slice(0, 3).map(t => <div key={t.id} className="size-1.5 rounded-full" style={{ backgroundColor: t.courseColor }} />)}
                   {dayTasks.length > 3 ? <div className="size-1.5 rounded-full bg-muted-foreground" /> : null}
                 </div>
                 
                 {/* Desktop task list */}
                 <div className="mt-2 hidden w-full flex-col gap-1 sm:flex">
                   {dayTasks.slice(0, 2).map((t) => (
-                    <div key={t.id} className={`w-full truncate rounded px-1.5 py-0.5 text-[10px] font-bold ${typeColors[t.type]} ${t.completed ? 'opacity-50 line-through' : ''}`}>
+                    <div key={t.id} className={`w-full truncate rounded border-l-[3px] px-1.5 py-0.5 text-[10px] font-bold ${typeColors[t.type]} ${t.completed ? 'opacity-50 line-through' : ''}`} style={{ borderLeftColor: t.courseColor }} title={`${t.courseCode} · ${t.title}`}>
                       {t.title}
                     </div>
                   ))}
@@ -457,7 +458,7 @@ function CalendarPage() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold">{task.title}</div>
                     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-sidebar-foreground/70">
-                      <span className="font-bold text-sidebar-primary">{task.courseCode}</span>
+                      <CourseTag code={task.courseCode} color={task.courseColor} className="font-bold text-sidebar-foreground" />
                       <span>•</span>
                       <span>{typeLabels[task.type]}</span>
                     </div>

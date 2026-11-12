@@ -14,6 +14,7 @@ export interface Task {
   courseId: number;
   courseName: string;
   courseCode: string;
+  courseColor: string;
   type: TaskType;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   dueDate: string;

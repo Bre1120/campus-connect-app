@@ -699,7 +699,7 @@ components:
           minLength: 1
     Task:
       type: object
-      required: [id, title, courseId, courseName, courseCode, type, dueDate, priority, completed, createdAt, updatedAt]
+      required: [id, title, courseId, courseName, courseCode, courseColor, type, dueDate, priority, completed, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -710,6 +710,8 @@ components:
         courseName:
           type: string
         courseCode:
+          type: string
+        courseColor:
           type: string
         type:
           type: string

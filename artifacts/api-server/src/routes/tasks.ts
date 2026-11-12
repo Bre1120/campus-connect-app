@@ -28,6 +28,7 @@ function taskSelection() {
     courseId: tasksTable.courseId,
     courseName: coursesTable.name,
     courseCode: coursesTable.code,
+    courseColor: coursesTable.color,
     type: tasksTable.type,
     dueDate: tasksTable.dueDate,
     dueTime: tasksTable.dueTime,
