@@ -60,7 +60,7 @@ export function OverdueTasksCard() {
       <div>
         <p className="text-xs font-bold uppercase tracking-[.13em] text-destructive">Needs attention</p>
         <h2 className="cc-display mt-1 text-2xl font-semibold" data-testid="text-overdue-count">{overdue.length === 1 ? '1 overdue task' : `${overdue.length} overdue tasks`}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Finish it, or give it a new day so it doesn't slip further.</p>
+        <p className="mt-1 text-sm text-muted-foreground">{overdue.length === 1 ? 'Finish it, or give it a new day so it doesn\'t slip further.' : 'Finish them, or give them new days so they don\'t slip further.'}</p>
       </div>
     </div>
     <div className="mt-4 divide-y divide-destructive/15">

@@ -470,6 +470,14 @@ export interface StudySessionInput {
   studiedOn: string;
 }
 
+export type GetDashboardParams = {
+/**
+ * The student's local calendar date; used when within a day of the server's date
+ * @pattern ^\d{4}-\d{2}-\d{2}$
+ */
+today?: string;
+};
+
 export type ListTasksParams = {
 status?: ListTasksStatus;
 type?: ListTasksType;

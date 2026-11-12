@@ -238,7 +238,8 @@ function AppShell({ children }: { children: ReactNode }) {
 }
 
 function DashboardPage() {
-  const { data, isLoading, isError, refetch } = useGetDashboard();
+  // Send the student's local date so "today" matches their calendar, not the server's UTC clock.
+  const { data, isLoading, isError, refetch } = useGetDashboard({ today: format(new Date(), 'yyyy-MM-dd') });
   const client = useQueryClient();
   const { toast } = useToast();
   const [dialog, setDialog] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });

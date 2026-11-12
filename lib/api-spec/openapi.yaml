@@ -44,6 +44,14 @@ paths:
       tags: [dashboard]
       summary: Get dashboard overview
       description: Returns the current student's daily tasks, upcoming deadlines, and completion progress.
+      parameters:
+        - name: today
+          in: query
+          required: false
+          description: The student's local calendar date; used when within a day of the server's date
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
       responses:
         "200":
           description: Dashboard overview

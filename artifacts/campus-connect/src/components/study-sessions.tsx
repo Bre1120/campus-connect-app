@@ -26,8 +26,8 @@ export function StudySessionsCard() {
   const client = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  // Weeks start on Sunday, matching the dashboard's weekly rhythm chart.
-  const weekStart = format(startOfWeek(new Date()), 'yyyy-MM-dd');
+  // Weeks start on Monday, matching the dashboard's weekly rhythm chart.
+  const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
   const params = { from: weekStart };
   const sessions = useListStudySessions(params);
   const del = useDeleteStudySession();

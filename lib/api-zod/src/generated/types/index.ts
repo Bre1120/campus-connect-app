@@ -35,6 +35,7 @@ export * from './flashcardDeck';
 export * from './flashcardDeckDetail';
 export * from './flashcardDeckInput';
 export * from './flashcardDraft';
+export * from './getDashboardParams';
 export * from './healthStatus';
 export * from './listCommunityMessagesParams';
 export * from './listCommunityMessagesRoom';

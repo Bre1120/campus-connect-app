@@ -21,6 +21,13 @@ export const HealthCheckResponse = zod.object({
  * Returns the current student's daily tasks, upcoming deadlines, and completion progress.
  * @summary Get dashboard overview
  */
+export const getDashboardQueryTodayRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetDashboardQueryParams = zod.object({
+  "today": zod.coerce.string().regex(getDashboardQueryTodayRegExp).optional().describe('The student\'s local calendar date; used when within a day of the server\'s date')
+})
+
 export const getDashboardResponseTodayTasksItemDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const getDashboardResponseUpcomingTasksItemDueDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const getDashboardResponseCompletionDaysItemDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
