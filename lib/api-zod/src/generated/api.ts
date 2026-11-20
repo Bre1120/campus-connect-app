@@ -181,7 +181,8 @@ export const ImportAgendaBody = zod.object({
   "dueDate": zod.string().regex(importAgendaBodyTasksItemDueDateRegExp),
   "dueTime": zod.string().regex(importAgendaBodyTasksItemDueTimeRegExp).nullish(),
   "priority": zod.enum(['low', 'medium', 'high']),
-  "notes": zod.string().max(importAgendaBodyTasksItemNotesMax).nullish()
+  "notes": zod.string().max(importAgendaBodyTasksItemNotesMax).nullish(),
+  "completed": zod.boolean().optional().describe('Import the task already checked off (used for past deadlines)')
 })).min(1).max(importAgendaBodyTasksMax)
 })
 

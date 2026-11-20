@@ -13,10 +13,15 @@ export type IcsTask = {
   dueTime: string | null;
   priority: 'low' | 'medium' | 'high';
   notes: string | null;
+  /** Past deadlines come in already checked off. */
+  completed: boolean;
 };
 export type IcsAgenda = { course: { code: string; name: string }; tasks: IcsTask[] };
 export type IcsParseResult = {
+  /** Upcoming deadlines only. */
   agendas: IcsAgenda[];
+  /** Upcoming and past deadlines; past ones are marked completed. */
+  agendasWithPast: IcsAgenda[];
   pastCount: number;
   noCourseCount: number;
   overLimitCount: number;
@@ -99,10 +104,11 @@ function buildNotes(description: string, url: string) {
   return [clipped, link].filter(Boolean).join('\n\n').slice(0, 2000) || null;
 }
 
-/** Parse an .ics file into one agenda per course. Past items are left out (counted in pastCount). */
+/** Parse an .ics file into one agenda per course, with and without past deadlines. */
 export function parseIcsAgendas(text: string, today: string): IcsParseResult {
   if (!/BEGIN:VCALENDAR/i.test(text)) throw new Error('This is not a calendar (.ics) file.');
   const groups = new Map<string, IcsAgenda>();
+  const labels = new Map<string, string>();
   const seen = new Set<string>();
   let pastCount = 0;
   let noCourseCount = 0;
@@ -125,27 +131,34 @@ export function parseIcsAgendas(text: string, today: string): IcsParseResult {
     const key = uid || `${summary}|${when.dueDate}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    if (when.dueDate < today) { pastCount += 1; continue; }
+    const completed = when.dueDate < today;
+    if (completed) pastCount += 1;
 
     const code = courseCodeFrom(label);
-    const group = groups.get(code) ?? { course: { code, name: label.slice(0, 140) }, tasks: [] };
+    if (!labels.has(code)) labels.set(code, label.slice(0, 140));
+    const group = groups.get(code) ?? { course: { code, name: labels.get(code)! }, tasks: [] };
     const type = guessType(title, uid);
     group.tasks.push({
       title, type, ...when,
       priority: guessPriority(title, type),
       notes: buildNotes(unescapeText(get('DESCRIPTION')?.value ?? ''), get('URL')?.value ?? ''),
+      completed,
     });
     groups.set(code, group);
   }
 
-  const agendas = [...groups.values()].map(group => {
-    group.tasks.sort((a, b) => `${a.dueDate} ${a.dueTime ?? '99'}`.localeCompare(`${b.dueDate} ${b.dueTime ?? '99'}`));
-    if (group.tasks.length > MAX_TASKS) {
-      overLimitCount += group.tasks.length - MAX_TASKS;
-      group.tasks = group.tasks.slice(0, MAX_TASKS);
+  const build = (includePast: boolean) => [...groups.values()].map(group => {
+    let tasks = group.tasks.filter(task => includePast || !task.completed);
+    tasks = [...tasks].sort((a, b) => `${a.dueDate} ${a.dueTime ?? '99'}`.localeCompare(`${b.dueDate} ${b.dueTime ?? '99'}`));
+    if (tasks.length > MAX_TASKS) {
+      // Keep the most recent and upcoming deadlines when a course has more than the limit.
+      if (includePast) overLimitCount += tasks.length - MAX_TASKS;
+      tasks = includePast ? tasks.slice(-MAX_TASKS) : tasks.slice(0, MAX_TASKS);
     }
-    return group;
-  }).sort((a, b) => a.course.code.localeCompare(b.course.code));
+    return { course: group.course, tasks };
+  }).filter(group => group.tasks.length).sort((a, b) => a.course.code.localeCompare(b.course.code));
 
-  return { agendas, pastCount, noCourseCount, overLimitCount };
+  const agendas = build(false);
+  const agendasWithPast = build(true);
+  return { agendas, agendasWithPast, pastCount, noCourseCount, overLimitCount };
 }

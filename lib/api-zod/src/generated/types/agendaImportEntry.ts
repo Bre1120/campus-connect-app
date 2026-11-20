@@ -28,4 +28,6 @@ export interface AgendaImportEntry {
      * @nullable
      */
   notes?: string | null;
+  /** Import the task already checked off (used for past deadlines) */
+  completed?: boolean;
 }

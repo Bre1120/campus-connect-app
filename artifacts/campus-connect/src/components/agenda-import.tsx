@@ -13,7 +13,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { parseIcsAgendas } from '@/lib/ics-agenda';
+import { parseIcsAgendas, type IcsParseResult } from '@/lib/ics-agenda';
 
 const daySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').refine(value => {
   const [year, month, day] = value.split('-').map(Number);
@@ -28,6 +28,7 @@ const entrySchema = z.object({
   dueTime: z.preprocess(value => value === '' ? null : value, z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour HH:mm').nullable().optional()),
   priority: z.enum(['low', 'medium', 'high']),
   notes: z.string().max(2000, 'Notes must be 2,000 characters or fewer').nullable().optional(),
+  completed: z.boolean().optional(),
 });
 const agendaSchema = z.object({
   course: z.object({
@@ -58,9 +59,17 @@ export function AgendaImportButton() {
   const [editError, setEditError] = useState('');
   const [result, setResult] = useState<{ insertedCount: number; skippedCount: number } | null>(null);
   // Courses found in a Canvas calendar (.ics) file, waiting to be reviewed one at a time.
-  const [icsQueue, setIcsQueue] = useState<EditableAgenda[]>([]);
-  const [icsIndex, setIcsIndex] = useState<number | null>(null);
-  const [icsNote, setIcsNote] = useState('');
+  const [icsParsed, setIcsParsed] = useState<IcsParseResult | null>(null);
+  const [includePast, setIncludePast] = useState(false);
+  const [importedCodes, setImportedCodes] = useState<string[]>([]);
+  const [icsCode, setIcsCode] = useState<string | null>(null);
+  const icsQueue: EditableAgenda[] = useMemo(() => icsParsed
+    ? (includePast ? icsParsed.agendasWithPast : icsParsed.agendas).filter(group => !importedCodes.includes(group.course.code))
+    : [], [icsParsed, includePast, importedCodes]);
+  const icsNote = icsParsed ? [
+    icsParsed.noCourseCount ? `${icsParsed.noCourseCount} personal ${icsParsed.noCourseCount === 1 ? 'event' : 'events'} with no course` : '',
+    icsParsed.overLimitCount && includePast ? `${icsParsed.overLimitCount} of the oldest, beyond the 100-per-course limit` : '',
+  ].filter(Boolean).join(', ') : '';
   const fileRef = useRef<HTMLInputElement>(null);
   const mutation = useImportAgenda({ mutation: { retry: false } });
   const coursesQuery = useListCourses();
@@ -100,9 +109,10 @@ export function AgendaImportButton() {
     setFileError('');
     setEditError('');
     setResult(null);
-    setIcsQueue([]);
-    setIcsIndex(null);
-    setIcsNote('');
+    setIcsParsed(null);
+    setIncludePast(false);
+    setImportedCodes([]);
+    setIcsCode(null);
     mutation.reset();
     if (fileRef.current) fileRef.current.value = '';
   };
@@ -111,7 +121,7 @@ export function AgendaImportButton() {
     const next = icsQueue[index];
     if (!next) return;
     setAgenda(next);
-    setIcsIndex(index);
+    setIcsCode(next.course.code);
     setSelectedCourseId('');
     setEditError('');
     setResult(null);
@@ -119,7 +129,7 @@ export function AgendaImportButton() {
   };
   const backToCourses = () => {
     setAgenda(null);
-    setIcsIndex(null);
+    setIcsCode(null);
     setSelectedCourseId('');
     setEditError('');
     setResult(null);
@@ -148,24 +158,21 @@ export function AgendaImportButton() {
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const parsed = parseIcsAgendas(await file.text(), today);
-        const leftOut = [
-          parsed.pastCount ? `${parsed.pastCount} past ${parsed.pastCount === 1 ? 'item' : 'items'}` : '',
-          parsed.noCourseCount ? `${parsed.noCourseCount} personal ${parsed.noCourseCount === 1 ? 'event' : 'events'} with no course` : '',
-          parsed.overLimitCount ? `${parsed.overLimitCount} beyond the 100-per-course limit` : '',
-        ].filter(Boolean).join(', ');
-        if (!parsed.agendas.length) {
-          setFileError(`No upcoming course deadlines were found in this calendar${leftOut ? ` (left out: ${leftOut})` : ''}.`);
+        if (!parsed.agendasWithPast.length) {
+          setFileError('No course deadlines were found in this calendar.');
           return;
         }
         setFileName(file.name);
-        setIcsQueue(parsed.agendas);
-        setIcsNote(leftOut ? `Left out: ${leftOut}.` : '');
+        setIcsParsed(parsed);
+        setImportedCodes([]);
+        // With nothing upcoming, past deadlines are the only thing to import.
+        setIncludePast(!parsed.agendas.length);
         setAgenda(null);
-        setIcsIndex(null);
+        setIcsCode(null);
         setSelectedCourseId('');
-        if (parsed.agendas.length === 1) {
+        if (parsed.agendasWithPast.length === 1 && !parsed.pastCount) {
           setAgenda(parsed.agendas[0]);
-          setIcsIndex(0);
+          setIcsCode(parsed.agendas[0].course.code);
         }
       } catch (error) {
         setFileError(error instanceof Error ? error.message : 'That calendar file could not be read.');
@@ -186,9 +193,10 @@ export function AgendaImportButton() {
       setAgenda(validated.data);
       setFileName(file.name);
       setSelectedCourseId('');
-      setIcsQueue([]);
-      setIcsIndex(null);
-      setIcsNote('');
+      setIcsParsed(null);
+      setIncludePast(false);
+      setImportedCodes([]);
+      setIcsCode(null);
     } catch {
       setFileError('That file is not valid JSON. Check it and choose it again.');
     }
@@ -206,6 +214,12 @@ export function AgendaImportButton() {
     tasksCopy[index] = { ...tasksCopy[index], [field]: value } as AgendaImportEntry;
     setAgenda({ ...agenda, tasks: tasksCopy });
     setEditError('');
+  };
+  const toggleDone = (index: number) => {
+    if (!agenda) return;
+    const tasksCopy = [...agenda.tasks];
+    tasksCopy[index] = { ...tasksCopy[index], completed: !tasksCopy[index].completed };
+    setAgenda({ ...agenda, tasks: tasksCopy });
   };
   const removeTask = (index: number) => {
     if (!agenda) return;
@@ -240,9 +254,10 @@ export function AgendaImportButton() {
     mutation.mutate({ data: input }, {
       onSuccess: response => {
         setResult({ insertedCount: response.insertedCount, skippedCount: response.skippedCount });
-        if (icsIndex !== null) {
-          setIcsQueue(queue => queue.filter((_, index) => index !== icsIndex));
-          setIcsIndex(null);
+        if (icsCode !== null) {
+          const done = icsCode;
+          setImportedCodes(codes => [...codes, done]);
+          setIcsCode(null);
         }
         void queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
         void queryClient.invalidateQueries({ queryKey: getListCoursesQueryKey() });
@@ -306,7 +321,14 @@ export function AgendaImportButton() {
                 <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
               </button>)}
             </div>
-            {icsNote ? <p className="mt-3 text-xs text-muted-foreground" data-testid="text-ics-left-out">{icsNote}</p> : null}
+            {icsParsed?.pastCount ? <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card/60 p-3.5 text-sm" data-testid="label-ics-include-past">
+              <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]" checked={includePast} onChange={event => setIncludePast(event.target.checked)} data-testid="checkbox-ics-include-past" />
+              <span>
+                <span className="block font-semibold">Include past deadlines ({icsParsed.pastCount})</span>
+                <span className="block text-xs leading-5 text-muted-foreground">They come in already checked off as done, so they show on your calendar without filling your overdue list. You can uncheck any you haven't finished.</span>
+              </span>
+            </label> : null}
+            {icsNote ? <p className="mt-3 text-xs text-muted-foreground" data-testid="text-ics-left-out">Left out: {icsNote}.</p> : null}
           </div> : null}
 
           {!agenda && !result && !icsQueue.length ? <div className="mx-auto max-w-xl py-3">
@@ -349,7 +371,7 @@ export function AgendaImportButton() {
                 <p className="mt-0.5 truncate text-sm font-semibold" data-testid="text-agenda-account">{account}</p>
               </div>
               <div className="flex shrink-0 gap-2">
-                {icsQueue.length > 1 ? <button type="button" disabled={pending} onClick={backToCourses} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted disabled:opacity-50" data-testid="button-agenda-back-to-courses">
+                {icsParsed ? <button type="button" disabled={pending} onClick={backToCourses} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted disabled:opacity-50" data-testid="button-agenda-back-to-courses">
                   <ChevronLeft size={14} /> All courses
                 </button> : null}
                 <button type="button" disabled={pending} onClick={() => fileRef.current?.click()} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted disabled:opacity-50" data-testid="button-change-agenda-file">
@@ -399,6 +421,10 @@ export function AgendaImportButton() {
                       <span className="truncate text-xs font-semibold text-muted-foreground">{task.title || 'Untitled task'}</span>
                       {isDuplicate ? <span className="shrink-0 rounded-full bg-[#c07b1f]/10 px-2 py-1 text-[10px] font-bold text-[#9a641b]" data-testid={`badge-agenda-duplicate-${index}`}>Possible duplicate</span> : null}
                     </div>
+                    <label className={`ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${task.completed ? 'bg-[#e4f3f0] text-[#23746a]' : 'text-muted-foreground hover:bg-muted'}`} data-testid={`label-agenda-done-${index}`}>
+                      <input type="checkbox" className="size-3.5 accent-[#23746a]" checked={!!task.completed} onChange={() => toggleDone(index)} data-testid={`checkbox-agenda-done-${index}`} />
+                      Done
+                    </label>
                     <button type="button" aria-label={`Remove task ${index + 1}`} onClick={() => removeTask(index)} className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive" data-testid={`button-remove-agenda-task-${index}`}><Trash2 size={15} /></button>
                   </div>
                   {isDuplicate ? <p className="mb-3 rounded-lg bg-[#c07b1f]/10 px-3 py-2 text-xs leading-5 text-[#805316]">Same course, title, and date as an existing task or an earlier row in this file. Matching entries will be skipped, not overwritten.</p> : null}

@@ -54,7 +54,7 @@ router.post("/tasks/import", requireAuth, async (req, res): Promise<void> => {
         entries.push({
           ownerId, courseId: course.id, title: task.title.trim(), type: task.type,
           dueDate: task.dueDate, dueTime: task.dueTime ?? null, priority: task.priority,
-          notes: task.notes?.trim() || null, completed: false,
+          notes: task.notes?.trim() || null, completed: task.completed ?? false,
         });
       }
       if (entries.length) await tx.insert(tasksTable).values(entries);

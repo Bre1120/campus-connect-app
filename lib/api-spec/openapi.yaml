@@ -643,6 +643,9 @@ components:
         notes:
           type: [string, "null"]
           maxLength: 2000
+        completed:
+          type: boolean
+          description: Import the task already checked off (used for past deadlines)
     AgendaImportResult:
       type: object
       required: [insertedCount, skippedCount, courseId]
