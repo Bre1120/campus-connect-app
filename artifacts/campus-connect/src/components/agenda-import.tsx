@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@clerk/react';
 import { z } from 'zod';
 import {
-  AlertCircle, Check, ChevronRight, FileJson2, LoaderCircle, Trash2, Upload,
+  AlertCircle, CalendarDays, Check, ChevronLeft, ChevronRight, FileJson2, LoaderCircle, Trash2, Upload,
 } from 'lucide-react';
 import {
   getGetDashboardQueryKey, getListCoursesQueryKey, getListTasksQueryKey,
@@ -13,6 +13,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { parseIcsAgendas } from '@/lib/ics-agenda';
 
 const daySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').refine(value => {
   const [year, month, day] = value.split('-').map(Number);
@@ -56,6 +57,10 @@ export function AgendaImportButton() {
   const [fileError, setFileError] = useState('');
   const [editError, setEditError] = useState('');
   const [result, setResult] = useState<{ insertedCount: number; skippedCount: number } | null>(null);
+  // Courses found in a Canvas calendar (.ics) file, waiting to be reviewed one at a time.
+  const [icsQueue, setIcsQueue] = useState<EditableAgenda[]>([]);
+  const [icsIndex, setIcsIndex] = useState<number | null>(null);
+  const [icsNote, setIcsNote] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const mutation = useImportAgenda({ mutation: { retry: false } });
   const coursesQuery = useListCourses();
@@ -68,7 +73,9 @@ export function AgendaImportButton() {
     ? courses.filter(course => normalize(course.code) === normalize(agenda.course.code))
     : [], [agenda, courses]);
   const matchedCourse = matchingCourses.length === 1 ? matchingCourses[0] : null;
-  const selectedCourse = matchingCourses.find(course => String(course.id) === selectedCourseId) ?? null;
+  // With no code match, the student may still send the tasks to any existing course.
+  const selectedCourse = (matchingCourses.length ? matchingCourses : courses)
+    .find(course => String(course.id) === selectedCourseId) ?? null;
   const targetCourse = matchingCourses.length === 1 ? matchedCourse : selectedCourse;
   const duplicates = useMemo(() => {
     if (!agenda) return new Set<number>();
@@ -93,8 +100,30 @@ export function AgendaImportButton() {
     setFileError('');
     setEditError('');
     setResult(null);
+    setIcsQueue([]);
+    setIcsIndex(null);
+    setIcsNote('');
     mutation.reset();
     if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const reviewCourse = (index: number) => {
+    const next = icsQueue[index];
+    if (!next) return;
+    setAgenda(next);
+    setIcsIndex(index);
+    setSelectedCourseId('');
+    setEditError('');
+    setResult(null);
+    mutation.reset();
+  };
+  const backToCourses = () => {
+    setAgenda(null);
+    setIcsIndex(null);
+    setSelectedCourseId('');
+    setEditError('');
+    setResult(null);
+    mutation.reset();
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -109,8 +138,38 @@ export function AgendaImportButton() {
     setEditError('');
     setResult(null);
     mutation.reset();
-    if (file.size > 256 * 1024) {
-      setFileError('This file is larger than 256 KB. Choose a smaller JSON agenda.');
+    const isCalendar = /\.ics$/i.test(file.name) || file.type === 'text/calendar';
+    if (file.size > (isCalendar ? 2 * 1024 * 1024 : 256 * 1024)) {
+      setFileError(isCalendar ? 'This calendar file is larger than 2 MB.' : 'This file is larger than 256 KB. Choose a smaller JSON agenda.');
+      return;
+    }
+    if (isCalendar) {
+      try {
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const parsed = parseIcsAgendas(await file.text(), today);
+        const leftOut = [
+          parsed.pastCount ? `${parsed.pastCount} past ${parsed.pastCount === 1 ? 'item' : 'items'}` : '',
+          parsed.noCourseCount ? `${parsed.noCourseCount} personal ${parsed.noCourseCount === 1 ? 'event' : 'events'} with no course` : '',
+          parsed.overLimitCount ? `${parsed.overLimitCount} beyond the 100-per-course limit` : '',
+        ].filter(Boolean).join(', ');
+        if (!parsed.agendas.length) {
+          setFileError(`No upcoming course deadlines were found in this calendar${leftOut ? ` (left out: ${leftOut})` : ''}.`);
+          return;
+        }
+        setFileName(file.name);
+        setIcsQueue(parsed.agendas);
+        setIcsNote(leftOut ? `Left out: ${leftOut}.` : '');
+        setAgenda(null);
+        setIcsIndex(null);
+        setSelectedCourseId('');
+        if (parsed.agendas.length === 1) {
+          setAgenda(parsed.agendas[0]);
+          setIcsIndex(0);
+        }
+      } catch (error) {
+        setFileError(error instanceof Error ? error.message : 'That calendar file could not be read.');
+      }
       return;
     }
     try {
@@ -127,6 +186,9 @@ export function AgendaImportButton() {
       setAgenda(validated.data);
       setFileName(file.name);
       setSelectedCourseId('');
+      setIcsQueue([]);
+      setIcsIndex(null);
+      setIcsNote('');
     } catch {
       setFileError('That file is not valid JSON. Check it and choose it again.');
     }
@@ -167,7 +229,7 @@ export function AgendaImportButton() {
     const input: AgendaImportInput = {
       course: {
         ...checked.data.course,
-        ...(matchingCourses.length > 1 && selectedCourse ? { courseId: selectedCourse.id } : {}),
+        ...(matchingCourses.length !== 1 && selectedCourse ? { courseId: selectedCourse.id } : {}),
       },
       tasks: checked.data.tasks.map(task => ({
         ...task,
@@ -178,6 +240,10 @@ export function AgendaImportButton() {
     mutation.mutate({ data: input }, {
       onSuccess: response => {
         setResult({ insertedCount: response.insertedCount, skippedCount: response.skippedCount });
+        if (icsIndex !== null) {
+          setIcsQueue(queue => queue.filter((_, index) => index !== icsIndex));
+          setIcsIndex(null);
+        }
         void queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
         void queryClient.invalidateQueries({ queryKey: getListCoursesQueryKey() });
         void queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
@@ -197,9 +263,9 @@ export function AgendaImportButton() {
     <input
       ref={fileRef}
       type="file"
-      accept="application/json,.json"
+      accept="application/json,.json,text/calendar,.ics"
       className="sr-only"
-      aria-label="Choose an agenda JSON file"
+      aria-label="Choose a Canvas calendar or agenda JSON file"
       data-testid="input-agenda-file"
       disabled={pending}
       onChange={event => { const input = event.currentTarget; const file = input.files?.[0]; input.value = ''; void readFile(file); }}
@@ -212,7 +278,7 @@ export function AgendaImportButton() {
               <p className="mb-1 text-[10px] font-bold uppercase tracking-[.16em] text-primary">Bring your syllabus along</p>
               <DialogTitle className="cc-display text-2xl sm:text-3xl">Import an agenda</DialogTitle>
               <DialogDescription className="mt-2 max-w-xl leading-5">
-                Choose a local JSON file, review every entry, then decide what belongs in your plan.
+                Choose your Canvas calendar (.ics) or a JSON file, review every entry, then decide what belongs in your plan.
               </DialogDescription>
             </div>
             {agenda && !result ? <span className="mt-1 rounded-full bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground">{agenda.tasks.length} {agenda.tasks.length === 1 ? 'entry' : 'entries'}</span> : null}
@@ -220,7 +286,30 @@ export function AgendaImportButton() {
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-7 sm:py-5">
-          {!agenda && !result ? <div className="mx-auto max-w-xl py-3">
+          {!agenda && !result && icsQueue.length ? <div className="mx-auto max-w-xl py-2" data-testid="panel-agenda-ics-courses">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[.13em] text-primary">From {fileName || 'your calendar'}</p>
+                <h3 className="cc-display text-xl font-semibold">{icsQueue.length === 1 ? '1 course to review' : `${icsQueue.length} courses to review`}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Pick a course to check its deadlines. You can import each course separately.</p>
+              </div>
+              <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted" data-testid="button-change-ics-file">Change file</button>
+            </div>
+            <div className="space-y-2">
+              {icsQueue.map((group, index) => <button type="button" key={group.course.code} onClick={() => reviewCourse(index)} className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left hover:border-primary/50 hover:bg-primary/5" data-testid={`button-ics-course-${index}`}>
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-secondary-foreground"><CalendarDays size={17} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{group.course.code}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{group.course.name}</span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-muted-foreground">{group.tasks.length} {group.tasks.length === 1 ? 'deadline' : 'deadlines'}</span>
+                <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+              </button>)}
+            </div>
+            {icsNote ? <p className="mt-3 text-xs text-muted-foreground" data-testid="text-ics-left-out">{icsNote}</p> : null}
+          </div> : null}
+
+          {!agenda && !result && !icsQueue.length ? <div className="mx-auto max-w-xl py-3">
             <button
               type="button"
               disabled={pending}
@@ -229,11 +318,19 @@ export function AgendaImportButton() {
               data-testid="button-choose-agenda-file"
             >
               <span className="mb-3 grid size-12 place-items-center rounded-2xl bg-secondary text-secondary-foreground transition-transform group-hover:-translate-y-0.5"><FileJson2 size={22} /></span>
-              <span className="font-semibold">Choose a JSON file</span>
-              <span className="mt-1 text-sm text-muted-foreground">Local file only · up to 256 KB · 1–100 tasks</span>
+              <span className="font-semibold">Choose a file</span>
+              <span className="mt-1 text-sm text-muted-foreground">Canvas calendar (.ics) or JSON · stays on this device</span>
             </button>
+            <div className="mt-4 rounded-xl border border-border/70 bg-card/60 p-4 text-sm leading-6 text-muted-foreground" data-testid="help-canvas-ics">
+              <p className="font-semibold text-foreground">Bring in Canvas deadlines</p>
+              <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+                <li>In Canvas, open <span className="font-semibold text-foreground">Calendar</span>.</li>
+                <li>Click <span className="font-semibold text-foreground">Calendar Feed</span> on the right, then <span className="font-semibold text-foreground">Click to view Calendar Feed</span> to download the .ics file.</li>
+                <li>Choose that file here. Upcoming deadlines are grouped by course for you to review.</li>
+              </ol>
+            </div>
             <div className="mt-4 rounded-xl border border-border/70 bg-card/60 p-4 text-sm leading-6 text-muted-foreground">
-              <p className="font-semibold text-foreground">Expected structure</p>
+              <p className="font-semibold text-foreground">Or use a JSON file</p>
               <code className="mt-2 block break-words rounded-lg bg-muted/70 p-3 font-mono text-[11px] leading-5">{'{ "course": { "code": "BIO 204", "name": "Cell Biology" }, "tasks": [{ "title": "Lab report", "type": "assignment", "dueDate": "2026-10-14", "dueTime": null, "priority": "medium", "notes": null }] }'}</code>
               <p className="mt-2">Nothing is saved until you confirm. The selected file is read in this browser and is not stored.</p>
             </div>
@@ -251,9 +348,14 @@ export function AgendaImportButton() {
                 <p className="text-[10px] font-bold uppercase tracking-[.13em] text-muted-foreground">Importing to signed-in account</p>
                 <p className="mt-0.5 truncate text-sm font-semibold" data-testid="text-agenda-account">{account}</p>
               </div>
-              <button type="button" disabled={pending} onClick={() => fileRef.current?.click()} className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted disabled:opacity-50" data-testid="button-change-agenda-file">
-                <FileJson2 size={14} /> Change file
-              </button>
+              <div className="flex shrink-0 gap-2">
+                {icsQueue.length > 1 ? <button type="button" disabled={pending} onClick={backToCourses} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted disabled:opacity-50" data-testid="button-agenda-back-to-courses">
+                  <ChevronLeft size={14} /> All courses
+                </button> : null}
+                <button type="button" disabled={pending} onClick={() => fileRef.current?.click()} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-semibold hover:bg-muted disabled:opacity-50" data-testid="button-change-agenda-file">
+                  <FileJson2 size={14} /> Change file
+                </button>
+              </div>
             </div>
 
             <section className="rounded-2xl border border-border bg-card p-4 sm:p-5" aria-labelledby="agenda-course-title">
@@ -273,7 +375,12 @@ export function AgendaImportButton() {
                   {matchingCourses.map(course => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}
                 </select>
               </label> : null}
-              {matchingCourses.length === 0 ? <p className="mt-3 text-xs text-muted-foreground" data-testid="text-agenda-new-course">No matching course yet. The course shown in this file will be added with the import.</p> : null}
+              {matchingCourses.length === 0 ? <label className="mt-3 block text-xs font-semibold text-muted-foreground" data-testid="text-agenda-new-course">No course with this code yet. Add these tasks to
+                <select value={selectedCourseId} onChange={event => { setSelectedCourseId(event.target.value); setEditError(''); }} className="field mt-1.5" data-testid="select-agenda-course-target">
+                  <option value="">A new course: {agenda.course.code.trim() || 'untitled'}</option>
+                  {courses.map(course => <option key={course.id} value={course.id}>{course.code} · {course.name}</option>)}
+                </select>
+              </label> : null}
             </section>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -343,6 +450,9 @@ export function AgendaImportButton() {
               <div className="rounded-xl border border-border bg-card p-4"><p className="text-2xl font-bold text-primary" data-testid="text-agenda-inserted-count">{result.insertedCount}</p><p className="mt-1 text-xs text-muted-foreground">added</p></div>
               <div className="rounded-xl border border-border bg-card p-4"><p className="text-2xl font-bold text-muted-foreground" data-testid="text-agenda-skipped-count">{result.skippedCount}</p><p className="mt-1 text-xs text-muted-foreground">skipped</p></div>
             </div>
+            {icsQueue.length ? <button type="button" onClick={backToCourses} className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary/8 px-4 text-sm font-semibold text-primary hover:bg-primary/12" data-testid="button-agenda-next-course">
+              Import another course ({icsQueue.length} left) <ChevronRight size={16} />
+            </button> : null}
           </div> : null}
         </div>
 
