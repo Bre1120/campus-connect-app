@@ -77,11 +77,19 @@ export function courseCodeFrom(label: string) {
 }
 
 export function guessType(title: string, uid: string): IcsTask['type'] {
-  if (/\b(exam|midterm|final|quiz|test)\b/i.test(title)) return 'exam';
-  if (/\b(project|presentation)\b/i.test(title)) return 'project';
-  if (/\b(read|reading|chapter|ch\.)\b/i.test(title)) return 'reading';
-  if (/assignment/i.test(uid) || /\b(assignment|homework|hw|essay|paper|lab|discussion)\b/i.test(title)) return 'assignment';
+  // Ignore asides like "(Please complete during the Final Exam session)".
+  const core = title.replace(/\([^)]*\)/g, ' ');
+  if (/^\W*(assignment|homework|hw)\b/i.test(core)) return 'assignment';
+  if (/\b(project|presentation|capstone)\b/i.test(core)) return 'project';
+  if (/\b(exam|midterm|quiz|test)\b/i.test(core)) return 'exam';
+  if (/\b(read|reading|chapter|ch\.)\b/i.test(core)) return 'reading';
+  if (/assignment/i.test(uid) || /\b(assignment|homework|hw|essay|paper|lab|discussion|report|reflection)\b/i.test(core)) return 'assignment';
   return 'other';
+}
+
+/** Exams and anything marked final are high priority. */
+export function guessPriority(title: string, type: IcsTask['type']): IcsTask['priority'] {
+  return type === 'exam' || /\bfinal\b/i.test(title) ? 'high' : 'medium';
 }
 
 function buildNotes(description: string, url: string) {
@@ -124,7 +132,7 @@ export function parseIcsAgendas(text: string, today: string): IcsParseResult {
     const type = guessType(title, uid);
     group.tasks.push({
       title, type, ...when,
-      priority: type === 'exam' ? 'high' : 'medium',
+      priority: guessPriority(title, type),
       notes: buildNotes(unescapeText(get('DESCRIPTION')?.value ?? ''), get('URL')?.value ?? ''),
     });
     groups.set(code, group);
